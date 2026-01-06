@@ -119,6 +119,20 @@ export async function signupCliente(input: z.infer<typeof SignupClienteSchema>) 
     revalidatePath('/dashboard/gerente')
     revalidatePath('/api/clientes/sin-asignar')
     
+    // Enviar PIN por email
+    try {
+      const { sendPINEmail } = await import('@/lib/email/resend')
+      await sendPINEmail({
+        to: validated.email,
+        userName: validated.nombreCompleto,
+        pin,
+        role: 'cliente',
+      })
+    } catch (emailError) {
+      console.error('[Email Error - Continuing]', emailError)
+      // No bloqueamos el registro si falla el email
+    }
+    
     return { success: true, pin }
     
   } catch (error) {
@@ -171,6 +185,20 @@ export async function signupGerente(input: z.infer<typeof SignupGerenteSchema>) 
     }
     
     console.log(`[Gerente Created] ${validated.nombreCompleto} - ${validated.email}`)
+    
+    // Enviar PIN por email
+    try {
+      const { sendPINEmail } = await import('@/lib/email/resend')
+      await sendPINEmail({
+        to: validated.email,
+        userName: validated.nombreCompleto,
+        pin,
+        role: 'gerente',
+      })
+    } catch (emailError) {
+      console.error('[Email Error - Continuing]', emailError)
+      // No bloqueamos el registro si falla el email
+    }
     
     return { success: true, pin }
     

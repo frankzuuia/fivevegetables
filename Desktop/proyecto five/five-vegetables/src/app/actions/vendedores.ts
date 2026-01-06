@@ -83,6 +83,20 @@ export async function createVendedor(input: z.infer<typeof CreateVendedorSchema>
     
     revalidatePath('/dashboard/gerente')
     
+    // Enviar PIN por email
+    try {
+      const { sendPINEmail } = await import('@/lib/email/resend')
+      await sendPINEmail({
+        to: validated.email,
+        userName: validated.nombreCompleto,
+        pin,
+        role: 'vendedor',
+      })
+    } catch (emailError) {
+      console.error('[Email Error - Continuing]', emailError)
+      // No bloqueamos la creación si falla el email
+    }
+    
     return { success: true, pin }
     
   } catch (error) {
