@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -41,7 +40,7 @@ export default function PINLoginPage() {
     try {
       // Llamar server action
       const { loginWithPIN } = await import('@/app/actions/auth')
-      const result = await loginWithPIN({ pin })
+      const result = await loginWithPIN(pin)
 
       if (!result.success) {
         toast.error(result.error || 'PIN incorrecto')
@@ -50,36 +49,10 @@ export default function PINLoginPage() {
         return
       }
 
-      // Autenticar con el hashed token
-      const supabase = createClient()
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email: result.email!,
-        token: result.hashed_token!,
-        type: 'email',
-      })
-
-      if (verifyError) {
-        console.error('Verify error:', verifyError)
-        toast.error('Error al establecer sesión')
-        setPinInput('')
-        setLoading(false)
-        return
-      }
-
+      // Éxito - navegar a sessionUrl que establece la sesión
       toast.success(`¡Bienvenido ${result.user!.name}!`)
-
-      // Redirigir según rol
-      const role = result.user!.role
-      if (role === 'cliente') {
-        router.push('/dashboard/cliente')
-      } else if (role === 'gerente') {
-        router.push('/dashboard/gerente')
-      } else if (role === 'vendedor') {
-        router.push('/dashboard/vendedor')
-      } else {
-        router.push('/dashboard')
-      }
-
+      window.location.href = result.sessionUrl!
+      
     } catch (error) {
       console.error('Login error:', error)
       toast.error('Error al iniciar sesión')

@@ -17,6 +17,7 @@ export async function GET() {
     } = await supabase.auth.getUser()
     
     if (authError || !user) {
+      console.error('[API Sin Asignar] Auth error:', authError)
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
@@ -41,9 +42,9 @@ export async function GET() {
     const { data: clientes, error: fetchError } = await supabase
       .from('clients_mirror')
       .select('*')
-      .eq('store_id', profile.store_id) // Store isolation
-      .or('vendedor_id.is.null,vendedor_id.eq.') // ⭐ Sin vendedor (null o vacío)
-      .order('created_at', { ascending: false }) // Más recientes primero
+      .eq('store_id', profile.store_id)
+      .or('vendedor_id.is.null,vendedor_id.eq.')
+      .order('created_at', { ascending: false })
     
     if (fetchError) {
       console.error('[API Clientes Sin Asignar Error]', fetchError)
