@@ -38,7 +38,7 @@ export function ClientesSinAsignar() {
   
   return (
     <>
-      <Card variant="elevated" className="overflow-hidden">
+      <Card variant="elevated" className="h-full overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-morph-primary-500 to-morph-primary-600 p-6">
           <div className="flex items-center justify-between">
@@ -68,7 +68,7 @@ export function ClientesSinAsignar() {
         </div>
         
         {/* Lista de clientes */}
-        <div className="p-6">
+        <div className="flex-1 p-6">
           {totalClientes === 0 ? (
             <div className="py-12 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-morph-gray-100">
