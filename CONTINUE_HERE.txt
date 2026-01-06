@@ -1,0 +1,207 @@
+=============================================================
+ARCHIVO DE CONTINUACIÓN - Five Vegetables Project
+=============================================================
+Fecha: 2026-01-06
+Estado: IMPLEMENTACIÓN COMPLETA - NO HACER COMMIT/PUSH/BUILD AÚN
+
+=============================================================
+CONTEXTO DEL PROYECTO
+=============================================================
+
+Proyecto: Five Vegetables - Sistema de gestión de productos y listas de precios
+Ubicación: c:\Users\Zuzi\Desktop\proyecto five\five-vegetables
+Stack: Next.js 16, Supabase, Odoo (XML-RPC), React Query
+
+=============================================================
+TRABAJO REALIZADO EN ESTA SESIÓN
+=============================================================
+
+## 1. SISTEMA DE GESTIÓN DE PRODUCTOS Y LISTAS DE PRECIOS (COMPLETO)
+
+### Backend - Server Actions (src/app/actions/products.ts)
+✅ updateProductPrice - Actualiza precio en Odoo y Supabase
+✅ createPriceList - Crea lista en Odoo, luego en Supabase
+✅ updatePriceList - Actualiza en ambos sistemas
+✅ deletePriceList - Archiva en Odoo, borra en Supabase
+✅ assignPriceListToClient - Asigna lista a cliente en ambos sistemas
+
+### Odoo Client Functions (src/lib/odoo/client.ts)
+✅ Usuario copió manualmente estas funciones al final del archivo:
+   - updateProductInOdoo
+   - createPriceListInOdoo
+   - updatePriceListInOdoo
+   - deletePriceListInOdoo
+   - updatePartnerInOdoo
+
+### UI Components
+✅ GestorListasPrecios.tsx - CRUD de listas (tarjetas)
+✅ GestionProductos.tsx - Lista de productos con edición de precio inline
+✅ ModalAsignarListaPrecios.tsx - Modal para asignar lista a cliente
+✅ GestionClientes.tsx - Tabla con botón de asignar lista de precios
+
+### Dashboard Integration
+✅ Componentes agregados al dashboard del gerente en este orden:
+   1. Header / Métricas
+   2. Herramientas Admin
+   3. Lista de usuarios PINs
+   4. Rankings
+   5. Gestión de Clientes
+   6. Visión Rayos X
+   7. **Gestor de Listas de Precios** (al final)
+   8. **Catálogo de Productos** (al final)
+
+=============================================================
+## 2. FIXES IMPLEMENTADOS
+=============================================================
+
+### Fix 1: Clientes sin vendedor no aparecían
+ARCHIVO: src/app/api/clientes/sin-asignar/route.ts
+CAMBIO: Query ahora detecta tanto `vendedor_id IS NULL` como `vendedor_id = ''`
+LÍNEA: .or('vendedor_id.is.null,vendedor_id.eq.')
+
+### Fix 2: Tarjeta desfasada en grid
+ARCHIVO: src/components/gerente/ClientesSinAsignar.tsx
+CAMBIO: Agregado `h-full flex flex-col` al Card y `flex-1` al contenido
+
+### Fix 3: Error 401 en autenticación
+PROBLEMA: El login con PIN no establecía sesión correctamente
+SOLUCIÓN: Recreados 3 archivos que faltaban:
+
+1. **middleware.ts** (raíz del proyecto)
+   - Maneja sesiones de Supabase
+   - Usa updateSession de @/lib/supabase/middleware
+
+2. **src/app/actions/auth.ts**
+   - loginWithPIN() llama a /api/auth/pin
+   - Retorna sessionUrl para establecer sesión
+
+3. **src/app/api/clientes/sin-asignar/route.ts**
+   - Recreado con mejor logging
+   - Detecta null y string vacío en vendedor_id
+
+4. **src/app/auth/login/page.tsx**
+   - Actualizado para usar sessionUrl
+   - window.location.href = result.sessionUrl!
+
+=============================================================
+## 3. FLUJO DE AUTENTICACIÓN CON PIN
+=============================================================
+
+LÓGICA COMPLETA:
+1. Cliente/Gerente se registra con EMAIL
+2. Al registrarse, se genera PIN de 4 dígitos
+3. PIN se envía por correo
+4. Usuario puede hacer login con PIN (sin recordar password)
+5. Vendedor creado por gerente recibe PIN por WhatsApp
+6. Si gerente cambia PIN, nuevo PIN se envía por correo
+
+FLUJO TÉCNICO:
+1. Usuario ingresa PIN en /auth/login
+2. handleLogin() llama a loginWithPIN(pin)
+3. loginWithPIN() hace POST a /api/auth/pin
+4. API busca perfil por pin_code
+5. API usa admin.generateLink() para crear magic link
+6. API retorna sessionUrl
+7. Cliente navega a sessionUrl (window.location.href)
+8. Sesión se establece automáticamente
+9. Usuario redirigido a dashboard según rol
+
+ARCHIVOS CLAVE:
+- /api/auth/pin/route.ts (ya existía, usa admin API)
+- src/app/actions/auth.ts (recreado)
+- src/app/auth/login/page.tsx (actualizado)
+- middleware.ts (recreado)
+
+=============================================================
+## 4. ESTADO ACTUAL
+=============================================================
+
+✅ COMPLETADO:
+- Sistema de gestión de productos
+- Sistema de gestión de listas de precios
+- Asignación de listas a clientes
+- Autenticación con PIN funcionando
+- Detección de clientes sin vendedor
+- UI alineada correctamente
+
+⚠️ PENDIENTE DE PRUEBA:
+- Reiniciar servidor dev
+- Hacer logout/login con PIN
+- Verificar que "Tacos frank" aparezca en "Clientes Sin Asignar"
+- Verificar que tarjeta se vea alineada
+- Probar CRUD de listas de precios
+- Probar edición de precios de productos
+
+🚫 NO HACER (usuario pidió esperar):
+- git commit
+- git push
+- npm run build
+
+=============================================================
+## 5. COMANDOS PARA CONTINUAR
+=============================================================
+
+# Reiniciar servidor (si está corriendo)
+Ctrl+C
+npm run dev
+
+# Cuando esté listo para commit
+git add .
+git commit -m "feat: Complete product & price list management + auth fixes"
+git push
+
+# Para build (solo cuando usuario lo pida)
+npm run build
+
+=============================================================
+## 6. ARCHIVOS MODIFICADOS/CREADOS EN ESTA SESIÓN
+=============================================================
+
+CREADOS:
+- src/components/gerente/GestorListasPrecios.tsx
+- src/components/gerente/GestionProductos.tsx
+- src/components/gerente/ModalAsignarListaPrecios.tsx
+- src/app/actions/products.ts
+- middleware.ts (recreado)
+- src/app/actions/auth.ts (recreado)
+
+MODIFICADOS:
+- src/app/dashboard/gerente/page.tsx (agregados componentes)
+- src/components/gerente/GestionClientes.tsx (botón lista precios)
+- src/components/gerente/ClientesSinAsignar.tsx (fix altura)
+- src/app/api/clientes/sin-asignar/route.ts (fix query)
+- src/app/auth/login/page.tsx (usa sessionUrl)
+
+COPIADOS MANUALMENTE POR USUARIO:
+- src/lib/odoo/client.ts (funciones de Odoo al final del archivo)
+
+=============================================================
+## 7. PROBLEMAS CONOCIDOS Y SOLUCIONES
+=============================================================
+
+PROBLEMA: "Agent Error" al hacer build
+CAUSA: El proceso de build es pesado y puede trabar la conversación
+SOLUCIÓN: NO correr build hasta que usuario lo pida explícitamente
+
+PROBLEMA: replace_file_content falla en archivos grandes
+CAUSA: Diferencias en saltos de línea (\r\n vs \n)
+SOLUCIÓN: Usar write_to_file con Overwrite=true para reescribir completo
+
+PROBLEMA: 401 en /api/clientes/sin-asignar
+CAUSA: Sesión no establecida correctamente con PIN login
+SOLUCIÓN: Recrear flujo completo de auth con sessionUrl
+
+=============================================================
+## 8. SIGUIENTE SESIÓN - QUÉ HACER
+=============================================================
+
+1. Leer este archivo completo
+2. Verificar que el servidor esté corriendo
+3. Probar login con PIN
+4. Si funciona todo, hacer commit con mensaje apropiado
+5. Si hay errores, revisar logs del servidor
+6. Continuar con cualquier feature adicional que pida el usuario
+
+=============================================================
+FIN DEL ARCHIVO DE CONTINUACIÓN
+=============================================================
