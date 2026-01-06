@@ -37,12 +37,12 @@ export async function GET() {
       )
     }
     
-    // 3. FETCH CLIENTES SIN VENDEDOR
+    // 3. FETCH CLIENTES SIN VENDEDOR (null o string vacío)
     const { data: clientes, error: fetchError } = await supabase
       .from('clients_mirror')
       .select('*')
       .eq('store_id', profile.store_id) // Store isolation
-      .is('vendedor_id', null) // ⭐ Sin vendedor asignado
+      .or('vendedor_id.is.null,vendedor_id.eq.') // ⭐ Sin vendedor (null o vacío)
       .order('created_at', { ascending: false }) // Más recientes primero
     
     if (fetchError) {
