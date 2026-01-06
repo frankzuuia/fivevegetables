@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { X, Tag, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import type { PriceList } from '@/types/database'
 
 interface Props {
   cliente: {
@@ -29,18 +30,20 @@ export function ModalAsignarListaPrecios({ cliente, onClose, onSuccess }: Props)
   const supabase = createClient()
 
   // Fetch available price lists
-  const { data: priceLists } = useQuery({
+  const priceListsQuery = useQuery({
     queryKey: ['price-lists'],
-    queryFn: async () => {
+    queryFn: async (): Promise<PriceList[]> => {
       const { data, error } = await supabase
         .from('price_lists')
         .select('*')
         .order('name')
 
       if (error) throw error
-      return data
+      return (data || []) as PriceList[]
     },
   })
+
+  const priceLists: PriceList[] = priceListsQuery.data || []
 
   // Assign mutation
   const assignMutation = useMutation({
@@ -74,7 +77,9 @@ export function ModalAsignarListaPrecios({ cliente, onClose, onSuccess }: Props)
     assignMutation.mutate(selectedPriceListId)
   }
 
-  const selectedList = priceLists?.find(list => list.id === selectedPriceListId)
+  const selectedList: PriceList | undefined = priceLists.find(
+    (list: PriceList) => list.id === selectedPriceListId
+  )
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -123,7 +128,7 @@ export function ModalAsignarListaPrecios({ cliente, onClose, onSuccess }: Props)
               className="w-full rounded-lg border border-morph-gray-300 px-4 py-3 focus:border-morph-primary-500 focus:ring-2 focus:ring-morph-primary-200"
             >
               <option value="">-- Seleccionar --</option>
-              {priceLists?.map((list) => (
+              {priceLists.map((list: PriceList) => (
                 <option key={list.id} value={list.id}>
                   {list.name} ({list.type}) - {list.discount_percentage}% desc.
                 </option>
