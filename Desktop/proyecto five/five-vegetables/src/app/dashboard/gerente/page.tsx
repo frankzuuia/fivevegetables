@@ -19,6 +19,7 @@ import { ModalDetalleCliente } from '@/components/gerente/ModalDetalleCliente'
 import { SyncProductsButton } from '@/components/gerente/SyncProductsButton'
 import { CrearVendedorButton } from '@/components/gerente/CrearVendedorButton'
 import { ListaUsuariosPINs } from '@/components/gerente/ListaUsuariosPINs'
+import { GestorListasPrecios } from '@/components/gerente/GestorListasPrecios'
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 
 export default function DashboardGerentePage() {

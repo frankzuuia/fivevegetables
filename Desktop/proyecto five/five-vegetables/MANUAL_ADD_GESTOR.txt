@@ -1,0 +1,28 @@
+==================================================
+INSTRUCCIÓN: Agregar GestorListasPrecios al Dashboard Gerente
+==================================================
+
+Archivo: src/app/dashboard/gerente/page.tsx
+
+PASO 1: Busca la línea que dice:
+        <ListaUsuariosPINs />
+
+PASO 2: DESPUÉS de esa línea, agrega:
+        
+        {/* Gestor de Listas de Precios */}
+        <GestorListasPrecios />
+
+Debería quedar así:
+
+        {/* Lista de Usuarios con PINs */}
+        <ListaUsuariosPINs />
+        
+        {/* Gestor de Listas de Precios */}
+        <GestorListasPrecios />
+        
+        {/* Rankings */}
+        <div className="grid gap-6 lg:grid-cols-2">
+
+==================================================
+NOTA: El import ya está agregado arriba en el archivo
+==================================================

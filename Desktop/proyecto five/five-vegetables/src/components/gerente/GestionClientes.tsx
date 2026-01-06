@@ -7,14 +7,16 @@
 
 import { useState } from 'react'
 import { ModalAsignarVendedor } from './ModalAsignarVendedor'
+import { ModalAsignarListaPrecios } from './ModalAsignarListaPrecios'
 import { useAllClientes } from '@/lib/hooks/useClientes'
-import { Search, UserCheck, Users } from 'lucide-react'
+import { Search, UserCheck, Users, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 export function GestionClientes() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCliente, setSelectedCliente] = useState<any>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [priceListModalOpen, setPriceListModalOpen] = useState(false)
   
   const { data: clientes, isLoading } = useAllClientes(searchTerm)
   
@@ -136,17 +138,31 @@ export function GestionClientes() {
                       {formatDate(cliente.created_at)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedCliente(cliente)
-                        setModalOpen(true)
-                      }}
-                    >
-                      {cliente.vendedor_id ? '🔄 Reasignar' : '👤 Asignar'}
-                    </Button>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedCliente(cliente)
+                          setModalOpen(true)
+                        }}
+                      >
+                        {cliente.vendedor_id ? '🔄 Reasignar' : '👤 Asignar'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedCliente(cliente)
+                          setPriceListModalOpen(true)
+                        }}
+                        className="border-morph-primary-300 text-morph-primary-600 hover:bg-morph-primary-50"
+                        title="Asignar lista de precios"
+                      >
+                        <Tag className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -166,7 +182,7 @@ export function GestionClientes() {
         </div>
       )}
       
-      {/* Modal Asignar/Reasignar */}
+      {/* Modal Asignar/Reasignar Vendedor */}
       {modalOpen && selectedCliente && (
         <ModalAsignarVendedor
           cliente={selectedCliente}
@@ -176,6 +192,21 @@ export function GestionClientes() {
           }}
           onSuccess={() => {
             setModalOpen(false)
+            setSelectedCliente(null)
+          }}
+        />
+      )}
+      
+      {/* Modal Asignar Lista de Precios */}
+      {priceListModalOpen && selectedCliente && (
+        <ModalAsignarListaPrecios
+          cliente={selectedCliente}
+          onClose={() => {
+            setPriceListModalOpen(false)
+            setSelectedCliente(null)
+          }}
+          onSuccess={() => {
+            setPriceListModalOpen(false)
             setSelectedCliente(null)
           }}
         />
