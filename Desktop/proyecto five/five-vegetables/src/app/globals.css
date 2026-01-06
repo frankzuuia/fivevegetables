@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+@theme {
+  /* Morphism Palette - Verde/Blanco */
+  --color-morph-bg: #FFFFFF;
+  --color-morph-surface: #F5F5F5;
+  --color-morph-border: #E0E0E0;
+  
+  /* Verde Primario */
+  --color-morph-primary-50: #E8F5E9;
+  --color-morph-primary-100: #C8E6C9;
+  --color-morph-primary-200: #A5D6A7;
+  --color-morph-primary-300: #81C784;
+  --color-morph-primary-400: #66BB6A;
+  --color-morph-primary-500: #4CAF50;
+  --color-morph-primary-600: #43A047;
+  --color-morph-primary-700: #388E3C;
+  --color-morph-primary-800: #2E7D32;
+  --color-morph-primary-900: #1B5E20;
+  
+  /* Grises */
+  --color-morph-gray-50: #FAFAFA;
+  --color-morph-gray-100: #F5F5F5;
+  --color-morph-gray-200: #EEEEEE;
+  --color-morph-gray-300: #E0E0E0;
+  --color-morph-gray-400: #BDBDBD;
+  --color-morph-gray-500: #9E9E9E;
+  --color-morph-gray-600: #757575;
+  --color-morph-gray-700: #616161;
+  --color-morph-gray-800: #424242;
+  --color-morph-gray-900: #212121;
+  
+  /* Estados */
+  --color-morph-success: #4CAF50;
+  --color-morph-warning: #FFC107;
+  --color-morph-error: #F44336;
+  --color-morph-info: #2196F3;
+  
+  /* Status Pedidos */
+  --color-status-draft: #9E9E9E;
+  --color-status-confirmed: #2196F3;
+  --color-status-processing: #FFC107;
+  --color-status-delivered: #4CAF50;
+  --color-status-cancelled: #F44336;
+  
+  /* Font Families */
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+  --font-family-heading: 'Raleway', system-ui, sans-serif;
+  
+ /* Box Shadows Morphism */
+  --shadow-morph-sm: 4px 4px 8px rgba(0, 0, 0, 0.1), -4px -4px 8px rgba(255, 255, 255, 0.9);
+  --shadow-morph: 6px 6px 12px rgba(0, 0, 0, 0.15), -6px -6px 12px rgba(255, 255, 255, 0.9);
+  --shadow-morph-lg: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.9);
+  --shadow-morph-inset: inset 4px 4px 8px rgba(0, 0, 0, 0.1), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  --shadow-morph-inset-deep: inset 6px 6px 12px rgba(0, 0, 0, 0.15), inset -6px -6px 12px rgba(255, 255, 255, 0.9);
+  
+  /* Border Radius */
+  --radius-morph: 16px;
+  --radius-morph-lg: 24px;
+  --radius-morph-xl: 32px;
+  
+  /* Animations */
+  --animate-pulse-slow: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-scale-in: scaleIn 0.2s ease-out;
+  --animate-slide-in-right: slideInRight 0.3s ease-out;
+  --animate-slide-in-left: slideInLeft 0.3s ease-out;
+  --animate-slide-in-bottom: slideInBottom 0.3s ease-out;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: var(--color-morph-bg);
+    color: var(--color-morph-gray-900);
+    font-family: var(--font-family-sans);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Morphism utilities */
+  .morph-elevated {
+    background-color: #FFFFFF;
+    box-shadow: var(--shadow-morph);
+    border-radius: var(--radius-morph);
+  }
+  
+  .morph-inset {
+    background-color: var(--color-morph-surface);
+    box-shadow: var(--shadow-morph-inset);
+    border-radius: var(--radius-morph);
+  }
+}
+
+@layer components {
+  /* Morphism Button Primary */
+  .btn-morph-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-morph-lg);
+    background: linear-gradient(to right, var(--color-morph-primary-500), var(--color-morph-primary-600));
+    padding: 0.75rem 1.5rem;
+    font-family: var(--font-family-heading);
+    font-weight: 700;
+    color: white;
+    box-shadow: var(--shadow-morph);
+    transition: all 0.2s;
+  }
+  
+  .btn-morph-primary:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-morph-lg);
+  }
+  
+  /* Morphism Card */
+  .card-morph {
+    border-radius: var(--radius-morph-xl);
+    background-color: #FFFFFF;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-morph);
+    transition: all 0.2s;
+  }
+  
+  .card-morph:hover {
+    box-shadow: var(--shadow-morph-lg);
+  }
+}
+
+/* Premium Animations Keyframes */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes slideInBottom {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
