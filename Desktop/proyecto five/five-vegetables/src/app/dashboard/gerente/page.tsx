@@ -20,6 +20,7 @@ import { SyncProductsButton } from '@/components/gerente/SyncProductsButton'
 import { CrearVendedorButton } from '@/components/gerente/CrearVendedorButton'
 import { ListaUsuariosPINs } from '@/components/gerente/ListaUsuariosPINs'
 import { GestorListasPrecios } from '@/components/gerente/GestorListasPrecios'
+import { GestionProductos } from '@/components/gerente/GestionProductos'
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 
 export default function DashboardGerentePage() {
@@ -147,6 +148,12 @@ export default function DashboardGerentePage() {
         
         {/* Visión Rayos X */}
         {storeId && <VisionRayosX storeId={storeId} />}
+
+        {/* Gestor de Listas de Precios */}
+        <GestorListasPrecios />
+
+        {/* Gestor de Productos */}
+        <GestionProductos />
         
         {/* Modal Detalle Cliente */}
         {selectedCliente && (

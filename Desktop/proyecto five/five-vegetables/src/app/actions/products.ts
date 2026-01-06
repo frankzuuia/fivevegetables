@@ -312,7 +312,7 @@ export async function deletePriceList(input: z.infer<typeof DeletePriceListSchem
 export async function assignPriceListToClient(input: z.infer<typeof AssignPriceListSchema>) {
   try {
     const validated = AssignPriceListSchema.parse(input)
-    const supa base = await createClient()
+    const supabase = await createClient()
 
     // Verificar que sea gerente
     const { data: { user } } = await supabase.auth.getUser()
