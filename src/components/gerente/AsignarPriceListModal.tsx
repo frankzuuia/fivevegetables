@@ -1,6 +1,6 @@
 // =====================================================
 // MODAL: Asignar Lista de Precios a Cliente
-// Selector dropdown con todas las listas disponibles
+// NEW VERSION - Bypassing cache issues
 // =====================================================
 
 'use client'
@@ -11,8 +11,11 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { X, Tag, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import type { Database } from '@/types/database'
 
-interface Props {
+type PriceList = Database['public']['Tables']['price_lists']['Row']
+
+interface AsignarPriceListModalProps {
   cliente: {
     id: string
     name: string
@@ -23,24 +26,26 @@ interface Props {
   onSuccess: () => void
 }
 
-export function ModalAsignarListaPrecios({ cliente, onClose, onSuccess }: Props) {
+export function AsignarPriceListModal({ cliente, onClose, onSuccess }: AsignarPriceListModalProps) {
   const [selectedPriceListId, setSelectedPriceListId] = useState(cliente.pricelist_id || '')
   const queryClient = useQueryClient()
   const supabase = createClient()
 
   // Fetch available price lists
-  const { data: priceLists } = useQuery({
+  const priceListsQuery = useQuery({
     queryKey: ['price-lists'],
-    queryFn: async () => {
+    queryFn: async (): Promise<PriceList[]> => {
       const { data, error } = await supabase
         .from('price_lists')
         .select('*')
         .order('name')
 
       if (error) throw error
-      return data
+      return (data || []) as PriceList[]
     },
   })
+
+  const priceLists: PriceList[] = priceListsQuery.data || []
 
   // Assign mutation
   const assignMutation = useMutation({
@@ -74,7 +79,16 @@ export function ModalAsignarListaPrecios({ cliente, onClose, onSuccess }: Props)
     assignMutation.mutate(selectedPriceListId)
   }
 
-  const selectedList = priceLists?.find(list => list.id === selectedPriceListId)
+  // Find selected list safely
+  let selectedList: PriceList | undefined
+  if (priceLists.length > 0 && selectedPriceListId) {
+    for (const list of priceLists) {
+      if (list.id === selectedPriceListId) {
+        selectedList = list
+        break
+      }
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -123,7 +137,7 @@ export function ModalAsignarListaPrecios({ cliente, onClose, onSuccess }: Props)
               className="w-full rounded-lg border border-morph-gray-300 px-4 py-3 focus:border-morph-primary-500 focus:ring-2 focus:ring-morph-primary-200"
             >
               <option value="">-- Seleccionar --</option>
-              {priceLists?.map((list) => (
+              {priceLists.map((list) => (
                 <option key={list.id} value={list.id}>
                   {list.name} ({list.type}) - {list.discount_percentage}% desc.
                 </option>

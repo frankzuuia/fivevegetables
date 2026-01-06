@@ -77,9 +77,10 @@ export function ModalAsignarListaPrecios({ cliente, onClose, onSuccess }: Props)
     assignMutation.mutate(selectedPriceListId)
   }
 
-  const selectedList: PriceList | undefined = priceLists.find(
-    (list: PriceList) => list.id === selectedPriceListId
-  )
+  // Temporarily bypassing TypeScript issue
+  const selectedList: PriceList | undefined = priceLists.length > 0 
+    ? priceLists.find((list: PriceList) => list.id === selectedPriceListId)
+    : undefined
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

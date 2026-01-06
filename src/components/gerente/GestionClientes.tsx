@@ -7,7 +7,7 @@
 
 import { useState } from 'react'
 import { ModalAsignarVendedor } from './ModalAsignarVendedor'
-import { ModalAsignarListaPrecios } from './ModalAsignarListaPrecios'
+import { AsignarPriceListModal } from './AsignarPriceListModal'
 import { useAllClientes } from '@/lib/hooks/useClientes'
 import { Search, UserCheck, Users, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -199,7 +199,7 @@ export function GestionClientes() {
       
       {/* Modal Asignar Lista de Precios */}
       {priceListModalOpen && selectedCliente && (
-        <ModalAsignarListaPrecios
+        <AsignarPriceListModal
           cliente={selectedCliente}
           onClose={() => {
             setPriceListModalOpen(false)
