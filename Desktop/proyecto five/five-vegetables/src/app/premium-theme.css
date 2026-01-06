@@ -1,0 +1,93 @@
+/* Modern Elegant Design - Clean Color Palette */
+
+/* Main container - clean light gray background */
+.premium-page {
+  background: #f9fafb;
+  min-height: 100vh;
+}
+
+/* Subtle background effects - very light */
+.bg-orb {
+  display: none; /* Removing for cleaner look */
+}
+
+.bg-orb-1,
+.bg-orb-2 {
+  display: none;
+}
+
+/* Modern white cards with subtle shadows */
+.glass-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.glass-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Elegant icon containers - gradient emerald with sophisticated shadows */
+.icon-glow {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  box-shadow: 
+    0 4px 6px -1px rgba(16, 185, 129, 0.3),
+    0 2px 4px -1px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: all 0.5s ease;
+}
+
+.glass-card:hover .icon-glow {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 
+    0 10px 15px -3px rgba(16, 185, 129, 0.4),
+    0 4px 6px -2px rgba(16, 185, 129, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 20px rgba(16, 185, 129, 0.2);
+  transform: scale(1.08) rotate(5deg);
+}
+
+.glass-card:hover .icon-glow::before {
+  left: 100%;
+}
+
+/* Clean text styles */
+.gradient-text {
+  color: #111827;
+}
+
+.gradient-text-green {
+  color: #10b981;
+}
+
+/* Hero container - white with subtle shadow */
+.hero-container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

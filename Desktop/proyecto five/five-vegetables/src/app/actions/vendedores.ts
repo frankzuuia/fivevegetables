@@ -1,187 +1,89 @@
 // =====================================================
-// SERVER ACTION: Eliminar Vendedor
-// Reasignación masiva clientes + soft delete vendedor
+// SERVER ACTION: Vendedores
+// Creación de vendedores por el gerente
 // =====================================================
 
 'use server'
 
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { updatePartnerPricelist } from '@/lib/odoo/client'
 import { revalidatePath } from 'next/cache'
 
-const EliminarVendedorSchema = z.object({
-  vendedorId: z.string().uuid(),
-  clientesReasignacion: z.array(
-    z.object({
-      clienteId: z.string().uuid(),
-      nuevoVendedorId: z.string().uuid(),
-    })
-  ),
+const CreateVendedorSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  nombreCompleto: z.string().min(1),
+  telefono: z.string().regex(/^\d{10}$/),
 })
 
-export async function eliminarVendedor(input: z.infer<typeof EliminarVendedorSchema>) {
+const DEFAULT_STORE_ID = process.env.NEXT_PUBLIC_DEFAULT_STORE_ID || '00000000-0000-0000-0000-000000000000'
+
+// Función para generar PIN de 4 dígitos
+function generatePIN(): string {
+  return Math.floor(1000 + Math.random() * 9000).toString()
+}
+
+export async function createVendedor(input: z.infer<typeof CreateVendedorSchema>) {
   try {
-    const validated = EliminarVendedorSchema.parse(input)
+    const validated = CreateVendedorSchema.parse(input)
     const supabase = await createClient()
     
-    // AUTH - Solo gerente
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) return { success: false, error: 'No autorizado' }
+    // Verificar que quien lo ejecuta sea gerente
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'No autenticado' }
     
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, store_id')
+      .select('role')
       .eq('id', user.id)
       .single()
     
-    if (!profile || profile.role !== 'gerente') {
-      return { success: false, error: 'Solo gerentes pueden eliminar vendedores' }
+    if (profile?.role !== 'gerente') {
+      return { success: false, error: 'Solo gerentes pueden crear vendedores' }
     }
     
-    // Validar vendedor existe y pertenece al store
-    const { data: vendedor } = await supabase
+    // 1. Crear usuario en Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: validated.email,
+      password: validated.password,
+    })
+    
+    if (authError) return { success: false, error: authError.message }
+    if (!authData.user) return { success: false, error: 'Error al crear usuario' }
+    
+    // 2. Generar PIN de 4 dígitos
+    const pin = generatePIN()
+    
+    // 3. Crear Profile como VENDEDOR
+    const { error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, store_id, active')
-      .eq('id', validated.vendedorId)
-      .eq('store_id', profile.store_id)
-      .single()
-    
-    if (!vendedor) {
-      return { success: false, error: 'Vendedor no encontrado' }
-    }
-    
-    if (!vendedor.active) {
-      return { success: false, error: 'Vendedor ya está desactivado' }
-    }
-    
-    // Obtener clientes del vendedor
-    const { data: clientesVendedor } = await supabase
-      .from('clients_mirror')
-      .select('id')
-      .eq('vendedor_id', validated.vendedorId)
-    
-    if (!clientesVendedor || clientesVendedor.length === 0) {
-      // Sin clientes, puede eliminar directamente
-      const { error: deactivateError } = await supabase
-        .from('profiles')
-        .update({
-          active: false,
-          deactivated_at: new Date().toISOString(),
-        })
-        .eq('id', validated.vendedorId)
-      
-      if (deactivateError) {
-        return { success: false, error: 'Error al desactivar vendedor' }
-      }
-      
-      revalidatePath('/dashboard/gerente')
-      return { success: true, message: 'Vendedor eliminado exitosamente (sin clientes)' }
-    }
-    
-    // Validar que se proporcionó reasignación para TODOS los clientes
-    const clienteIds = clientesVendedor.map(c => c.id)
-    const reasignadosIds = validated.clientesReasignacion.map(r => r.clienteId)
-    
-    const faltantes = clienteIds.filter(id => !reasignadosIds.includes(id))
-    if (faltantes.length > 0) {
-      return {
-        success: false,
-        error: `Falta reasignar ${faltantes.length} cliente(s). Debes reasignar TODOS antes de eliminar.`
-      }
-    }
-    
-    // Procesar reasignaciones
-    for (const reasignacion of validated.clientesReasignacion) {
-      // Validar nuevo vendedor existe y es del mismo store
-      const { data: nuevoVendedor } = await supabase
-        .from('profiles')
-        .select('id, store_id')
-        .eq('id', reasignacion.nuevoVendedorId)
-        .eq('role', 'vendedor')
-        .eq('store_id', profile.store_id)
-        .single()
-      
-      if (!nuevoVendedor) {
-        return { success: false, error: `Vendedor destino no válido` }
-      }
-      
-      // UPDATE clients_mirror
-      const { error: updateClienteError } = await supabase
-        .from('clients_mirror')
-        .update({ vendedor_id: reasignacion.nuevoVendedorId })
-        .eq('id', reasignacion.clienteId)
-      
-      if (updateClienteError) {
-        console.error('[Update Cliente Error]', updateClienteError)
-        return { success: false, error: 'Error al reasignar cliente' }
-      }
-      
-      // UPDATE vendedor_clientes relation
-      const { error: deleteRelError } = await supabase
-        .from('vendedor_clientes')
-        .delete()
-        .eq('cliente_id', reasignacion.clienteId)
-        .eq('vendedor_id', validated.vendedorId)
-      
-      if (deleteRelError) console.error('[Delete Rel Error]', deleteRelError)
-      
-      const { error: insertRelError } = await supabase
-        .from('vendedor_clientes')
-        .insert({
-          vendedor_id: reasignacion.nuevoVendedorId,
-          cliente_id: reasignacion.clienteId,
-        })
-      
-      if (insertRelError) console.error('[Insert Rel Error]', insertRelError)
-      
-      // Odoo sync (best effort, no bloquear si falla)
-      try {
-        const { data: cliente } = await supabase
-          .from('clients_mirror')
-          .select('odoo_partner_id, pricelist_id, price_lists(odoo_pricelist_id)')
-          .eq('id', reasignacion.clienteId)
-          .single()
-        
-        if (cliente?.odoo_partner_id && (cliente as any).price_lists?.odoo_pricelist_id) {
-          await updatePartnerPricelist(
-            cliente.odoo_partner_id,
-            (cliente as any).price_lists.odoo_pricelist_id
-          )
-        }
-      } catch (odooError) {
-        console.error('[Odoo Sync Error]', odooError)
-        // No fallar por error Odoo
-      }
-    }
-    
-    // Soft delete vendedor
-    const { error: deactivateError } = await supabase
-      .from('profiles')
-      .update({
-        active: false,
-        deactivated_at: new Date().toISOString(),
+      .insert({
+        id: authData.user.id,
+        store_id: DEFAULT_STORE_ID,
+        full_name: validated.nombreCompleto,
+        role: 'vendedor',
+        phone: validated.telefono,
+        pin_code: pin,
       })
-      .eq('id', validated.vendedorId)
     
-    if (deactivateError) {
-      return { success: false, error: 'Error al desactivar vendedor' }
+    if (profileError) {
+      console.error('[Profile Vendedor Error]', profileError)
+      return { success: false, error: 'Error al crear perfil de vendedor' }
     }
+    
+    console.log(`[Vendedor Created] ${validated.nombreCompleto} - ${validated.email}`)
     
     revalidatePath('/dashboard/gerente')
-    revalidatePath('/api/clientes/sin-asignar')
     
-    return {
-      success: true,
-      message: `Vendedor eliminado. ${validated.clientesReasignacion.length} cliente(s) reasignado(s).`
-    }
+    return { success: true, pin }
     
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: 'Datos de reasignación inválidos' }
+      const firstError = error.issues[0]
+      return { success: false, error: `${firstError.path.join('.')}: ${firstError.message}` }
     }
     
-    console.error('[Eliminar Vendedor Error]', error)
-    return { success: false, error: 'Error al eliminar vendedor' }
+    console.error('[Create Vendedor Error]', error)
+    return { success: false, error: 'Error al crear vendedor' }
   }
 }

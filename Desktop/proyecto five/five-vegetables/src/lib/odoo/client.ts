@@ -16,7 +16,7 @@ function parseOdooURL() {
   return {
     host: url.hostname,
     port: parseInt(url.port || (url.protocol === 'https:' ? '443' : '80')),
-    path: '/xmlrpc/2',
+    path: '/xmlrpc/2/common',
     secure: url.protocol === 'https:',
   }
 }
@@ -26,7 +26,8 @@ const commonClient = xmlrpc.createSecureClient(parseOdooURL())
 
 // Cliente de objeto para Odoo
 const objectClient = xmlrpc.createSecureClient({
-  ...parseOdooURL(),
+  host: parseOdooURL().host,
+  port: parseOdooURL().port,
   path: '/xmlrpc/2/object',
 })
 
@@ -311,7 +312,8 @@ export async function createPartnerInOdoo(data: {
         street: data.street,
         city: data.city,
         zip: data.zip,
-        country_id: 157, // México
+        country_id: 156, // México (ID estándar en Odoo)
+        state_id: 491, // Jalisco, México (ID estándar en Odoo)
         is_company: true,
         customer_rank: 1,
       }],

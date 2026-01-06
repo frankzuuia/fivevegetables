@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { PINModal } from '@/components/auth/PINModal'
 
 const SignupSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -20,6 +21,7 @@ const SignupSchema = z.object({
   restaurant: z.string().min(1, 'Nombre restaurant requerido'),
   calle: z.string().min(1, 'Calle requerida'),
   numeroExterior: z.string().min(1, 'Número requerido'),
+  entreCalles: z.string().optional(),
   colonia: z.string().min(1, 'Colonia requerida'),
   codigoPostal: z.string().regex(/^\d{5}$/, 'CP 5 dígitos'),
 })
@@ -35,12 +37,15 @@ export default function SignupPage() {
     restaurant: '',
     calle: '',
     numeroExterior: '',
+    entreCalles: '',
     colonia: '',
     codigoPostal: '',
   })
   
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [showPINModal, setShowPINModal] = useState(false)
+  const [generatedPIN, setGeneratedPIN] = useState('')
   
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -64,8 +69,14 @@ export default function SignupPage() {
         throw new Error(result.error)
       }
       
-      toast.success('¡Registro exitoso! Por favor espera que un vendedor te sea asignado.')
-      router.push('/dashboard/cliente')
+      // Mostrar PIN en modal
+      if (result.pin) {
+        setGeneratedPIN(result.pin)
+        setShowPINModal(true)
+      } else {
+        toast.success('¡Registro exitoso!')
+        router.push('/dashboard/cliente')
+      }
       
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -207,6 +218,18 @@ export default function SignupPage() {
               </div>
             </div>
             
+            <div>
+              <label className="mb-2 block text-sm font-medium text-morph-gray-700">
+                Entre Calles (opcional)
+              </label>
+              <Input
+                value={formData.entreCalles}
+                onChange={(e) => updateField('entreCalles', e.target.value)}
+                placeholder="Entre Av. Hidalgo y Calle Morelos"
+                error={errors.entreCalles}
+              />
+            </div>
+            
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-morph-gray-700">
@@ -262,8 +285,20 @@ export default function SignupPage() {
               Inicia sesión
             </button>
           </p>
-        </form>
+                </form>
       </div>
+      
+      {/* Modal de PIN */}
+      {showPINModal && generatedPIN && (
+        <PINModal
+          pin={generatedPIN}
+          userName={formData.nombreCompleto}
+          onClose={() => {
+            setShowPINModal(false)
+            router.push('/dashboard/cliente')
+          }}
+        />
+      )}
     </div>
   )
 }

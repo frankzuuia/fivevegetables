@@ -16,6 +16,8 @@ import { ClientesSinAsignar } from '@/components/gerente/ClientesSinAsignar'
 import { GestionClientes } from '@/components/gerente/GestionClientes'
 import { VisionRayosX } from '@/components/gerente/VisionRayosX'
 import { ModalDetalleCliente } from '@/components/gerente/ModalDetalleCliente'
+import { SyncProductsButton } from '@/components/gerente/SyncProductsButton'
+import { CrearVendedorButton } from '@/components/gerente/CrearVendedorButton'
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 
 export default function DashboardGerentePage() {
@@ -96,6 +98,26 @@ export default function DashboardGerentePage() {
             value={metrics?.totalOrders?.toString() || '0'}
             icon={Users}
           />
+        </div>
+        
+        {/* Herramientas Administrativas */}
+        <div className="rounded-lg border border-morph-gray-200 bg-white p-6 shadow-lg">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-morph-gray-900">
+              🛠️ Herramientas Administrativas
+            </h2>
+            <p className="mt-1 text-sm text-morph-gray-600">
+              Gestión y sincronización de datos con Odoo
+            </p>
+          </div>
+          
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:flex-wrap">
+            <SyncProductsButton />
+            <CrearVendedorButton />
+            <p className="text-sm text-morph-gray-500 w-full sm:w-auto">
+              Sincroniza automáticamente cada 5 minutos
+            </p>
+          </div>
         </div>
         
         {/* Rankings */}

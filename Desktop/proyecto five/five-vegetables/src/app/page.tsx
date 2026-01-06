@@ -2,12 +2,18 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Phone, MapPin, Clock, ArrowRight, Leaf, Truck, Shield, Users } from 'lucide-react'
 import { HeroCarousel } from '@/components/HeroCarousel'
+import './premium-theme.css'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
+    <div className="premium-page">
+      {/* Animated Background Orbs */}
+      <div className="bg-orb bg-orb-1"></div>
+      <div className="bg-orb bg-orb-2"></div>
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-8 pb-12">
+      <section className="container mx-auto px-4 pt-8 pb-12 relative z-10">
+        {/* Elegant White Container with Black Borders */}
+        <div className="hero-container p-8">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
           {/* Left Content */}
           <div className="space-y-6">
@@ -22,13 +28,13 @@ export default function Home() {
             
             {/* Title */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold">
-              <span className="text-morph-gray-900">Frutas y Verduras</span>
+              <span className="text-gray-900">Frutas y Verduras</span>
               <br />
-              <span className="text-green-600">Premium</span>
+              <span className="gradient-text-green">Premium</span>
             </h1>
             
             {/* Subtitle */}
-            <p className="text-lg sm:text-xl text-morph-gray-600 max-w-lg">
+            <p className="text-lg sm:text-xl text-gray-600 max-w-lg">
               Venta mayorista con entrega garantizada. Calidad premium, precios personalizados.
             </p>
             
@@ -36,7 +42,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-600 to-green-700 px-8 py-4 text-lg font-medium text-white shadow-md transition-all hover:shadow-lg hover:scale-105"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-8 py-4 text-lg font-semibold text-white shadow-sm transition-all hover:bg-emerald-600 hover:shadow-md"
               >
                 Acceder
                 <ArrowRight className="h-5 w-5" />
@@ -44,9 +50,7 @@ export default function Home() {
               
               <a
                 href="tel:+523319775777"
-                className="inline-flex items-center justify-center gap-2 rounded-lg
-
- border-2 border-green-600 bg-white px-8 py-4 text-lg font-medium text-green-600 transition-all hover:bg-green-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-8 py-4 text-lg font-semibold text-gray-700 transition-all hover:border-emerald-500 hover:text-emerald-600"
               >
                 Contáctanos
                 <Phone className="h-5 w-5" />
@@ -56,16 +60,16 @@ export default function Home() {
             {/* Stats */}
             <div className="flex gap-8 pt-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">100%</div>
-                <div className="text-sm text-morph-gray-600">Fresco</div>
+                <div className="text-3xl font-bold text-emerald-600">100%</div>
+                <div className="text-sm text-gray-600">Fresco</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">A Tiempo</div>
-                <div className="text-sm text-morph-gray-600">Entrega</div>
+                <div className="text-3xl font-bold text-emerald-600">A Tiempo</div>
+                <div className="text-sm text-gray-600">Entrega</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">Premium</div>
-                <div className="text-sm text-morph-gray-600">Calidad</div>
+                <div className="text-3xl font-bold text-emerald-600">Premium</div>
+                <div className="text-sm text-gray-600">Calidad</div>
               </div>
             </div>
           </div>
@@ -73,69 +77,70 @@ export default function Home() {
           {/* Right: Image Carousel */}
           <HeroCarousel />
         </div>
+        </div>
       </section>
 
       {/* Features Section */}
       <section className="px-4 py-16 bg-white">
         <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-morph-gray-900">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold gradient-text">
               ¿Por qué elegirnos?
             </h2>
-            <p className="mt-4 text-lg text-morph-gray-600">
+            <p className="mt-4 text-xl text-gray-700">
               Calidad premium para tu negocio
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {/* Feature 1 */}
-            <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-8 shadow-sm hover:shadow-md transition-shadow">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-600">
-                <Truck className="h-7 w-7 text-white" />
+            <div className="glass-card p-8">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full icon-glow">
+                <Truck className="h-8 w-8 text-white" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-morph-gray-900">
+              <h3 className="mb-3 text-xl font-bold text-gray-900">
                 Entrega a Tiempo
               </h3>
-              <p className="text-morph-gray-600">
+              <p className="text-gray-700">
                 Tu pedido entregado puntualmente con frescura garantizada
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-8 shadow-sm hover:shadow-md transition-shadow">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-600">
-                <Shield className="h-7 w-7 text-white" />
+            <div className="glass-card p-8">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full icon-glow">
+                <Shield className="h-8 w-8 text-white" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-morph-gray-900">
+              <h3 className="mb-3 text-xl font-bold text-gray-900">
                 Calidad Premium
               </h3>
-              <p className="text-morph-gray-600">
+              <p className="text-gray-700">
                 Productos seleccionados con los más altos estándares de calidad
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-8 shadow-sm hover:shadow-md transition-shadow">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-600">
-                <Users className="h-7 w-7 text-white" />
+            <div className="glass-card p-8">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full icon-glow">
+                <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-morph-gray-900">
+              <h3 className="mb-3 text-xl font-bold text-gray-900">
                 Precios a tu Medida
               </h3>
-              <p className="text-morph-gray-600">
+              <p className="text-gray-700">
                 Tarifas flexibles adaptadas al volumen de tu negocio
               </p>
             </div>
 
             {/* Feature 4 */}
-            <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-8 shadow-sm hover:shadow-md transition-shadow">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-600">
-                <Leaf className="h-7 w-7 text-white" />
+            <div className="glass-card p-8">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full icon-glow">
+                <Leaf className="h-8 w-8 text-white" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-morph-gray-900">
+              <h3 className="mb-3 text-xl font-bold text-gray-900">
                 100% Fresco
               </h3>
-              <p className="text-morph-gray-600">
+              <p className="text-gray-700">
                 Directo del campo a tu negocio, máxima frescura asegurada
               </p>
             </div>
