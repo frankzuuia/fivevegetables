@@ -18,6 +18,7 @@ import { VisionRayosX } from '@/components/gerente/VisionRayosX'
 import { ModalDetalleCliente } from '@/components/gerente/ModalDetalleCliente'
 import { SyncProductsButton } from '@/components/gerente/SyncProductsButton'
 import { CrearVendedorButton } from '@/components/gerente/CrearVendedorButton'
+import { ListaUsuariosPINs } from '@/components/gerente/ListaUsuariosPINs'
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 
 export default function DashboardGerentePage() {
@@ -119,6 +120,9 @@ export default function DashboardGerentePage() {
             </p>
           </div>
         </div>
+        
+        {/* Lista de Usuarios con PINs */}
+        <ListaUsuariosPINs />
         
         {/* Rankings */}
         <div className="grid gap-6 lg:grid-cols-2">

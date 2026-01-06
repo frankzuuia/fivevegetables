@@ -1,6 +1,6 @@
 // =====================================================
 // SERVER ACTION: Vendedores
-// Creación de vendedores por el gerente
+// Creación y gestión de vendedores por el gerente
 // =====================================================
 
 'use server'
@@ -14,6 +14,14 @@ const CreateVendedorSchema = z.object({
   password: z.string().min(6),
   nombreCompleto: z.string().min(1),
   telefono: z.string().regex(/^\d{10}$/),
+})
+
+const EliminarVendedorSchema = z.object({
+  vendedorId: z.string().uuid(),
+  clientesReasignacion: z.array(z.object({
+    clienteId: z.string().uuid(),
+    nuevoVendedorId: z.string().uuid(),
+  })),
 })
 
 const DEFAULT_STORE_ID = process.env.NEXT_PUBLIC_DEFAULT_STORE_ID || '00000000-0000-0000-0000-000000000000'
@@ -85,5 +93,66 @@ export async function createVendedor(input: z.infer<typeof CreateVendedorSchema>
     
     console.error('[Create Vendedor Error]', error)
     return { success: false, error: 'Error al crear vendedor' }
+  }
+}
+
+export async function eliminarVendedor(input: z.infer<typeof EliminarVendedorSchema>) {
+  try {
+    const validated = EliminarVendedorSchema.parse(input)
+    const supabase = await createClient()
+    
+    // Verificar que quien lo ejecuta sea gerente
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'No autenticado' }
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile?.role !== 'gerente') {
+      return { success: false, error: 'Solo gerentes pueden eliminar vendedores' }
+    }
+    
+    // 1. Reasignar clientes si hay
+    if (validated.clientesReasignacion.length > 0) {
+      for (const reasignacion of validated.clientesReasignacion) {
+        await supabase
+          .from('clients_mirror')
+          .update({ vendedor_id: reasignacion.nuevoVendedorId })
+          .eq('id', reasignacion.clienteId)
+      }
+    }
+    
+    // 2. Soft delete del vendedor (desactivar)
+    const { error: deactivateError } = await supabase
+      .from('profiles')
+      .update({
+        active: false,
+        deactivated_at: new Date().toISOString(),
+        deactivated_by: user.id,
+      })
+      .eq('id', validated.vendedorId)
+    
+    if (deactivateError) {
+      console.error('[Deactivate Vendedor Error]', deactivateError)
+      return { success: false, error: 'Error al desactivar vendedor' }
+    }
+    
+    console.log(`[Vendedor Deactivated] ${validated.vendedorId}`)
+    
+    revalidatePath('/dashboard/gerente')
+    
+    return { success: true }
+    
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const firstError = error.issues[0]
+      return { success: false, error: `${firstError.path.join('.')}: ${firstError.message}` }
+    }
+    
+    console.error('[Eliminar Vendedor Error]', error)
+    return { success: false, error: 'Error al eliminar vendedor' }
   }
 }

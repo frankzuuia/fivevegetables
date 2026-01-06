@@ -50,12 +50,21 @@ export default function PINLoginPage() {
         return
       }
 
-      // Establecer sesión en el cliente
+      // Autenticar con el hashed token
       const supabase = createClient()
-      await supabase.auth.setSession({
-        access_token: result.access_token!,
-        refresh_token: result.refresh_token!,
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: result.email!,
+        token: result.hashed_token!,
+        type: 'email',
       })
+
+      if (verifyError) {
+        console.error('Verify error:', verifyError)
+        toast.error('Error al establecer sesión')
+        setPinInput('')
+        setLoading(false)
+        return
+      }
 
       toast.success(`¡Bienvenido ${result.user!.name}!`)
 

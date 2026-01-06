@@ -7,7 +7,6 @@
 
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
 
 const PINLoginSchema = z.object({
   pin: z.string().length(4),
@@ -29,7 +28,7 @@ export async function loginWithPIN(input: z.infer<typeof PINLoginSchema>) {
       return { success: false, error: 'PIN incorrecto' }
     }
 
-    // 2. Obtener email del usuario
+    // 2. Obtener email del usuario desde auth.users
     const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(
       profile.id
     )
@@ -38,39 +37,15 @@ export async function loginWithPIN(input: z.infer<typeof PINLoginSchema>) {
       return { success: false, error: 'Usuario no encontrado' }
     }
 
-    // 3. Crear sesión usando signInWithPassword
-    // Nota: Esto requiere que el usuario tenga una contraseña configurada
-    // Como alternativa, podemos usar el admin API para crear un token
-    
-    // Crear un token de sesión usando admin API
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({
-      user_id: profile.id,
+    // 3. Generar link mágico para autenticación
+    const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: authUser.user.email,
     })
 
-    if (sessionError || !sessionData) {
-      console.error('Session creation error:', sessionError)
+    if (magicLinkError || !magicLinkData) {
+      console.error('Magic link error:', magicLinkError)
       return { success: false, error: 'Error al crear sesión' }
-    }
-
-    // 4. Establecer las cookies de sesión
-    const cookieStore = await cookies()
-    
-    if (sessionData.session) {
-      cookieStore.set('sb-access-token', sessionData.session.access_token, {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: sessionData.session.expires_in,
-      })
-
-      cookieStore.set('sb-refresh-token', sessionData.session.refresh_token, {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 días
-      })
     }
 
     return {
@@ -80,8 +55,9 @@ export async function loginWithPIN(input: z.infer<typeof PINLoginSchema>) {
         name: profile.full_name,
         role: profile.role,
       },
-      access_token: sessionData.session.access_token,
-      refresh_token: sessionData.session.refresh_token,
+      email: authUser.user.email,
+      // Extraer tokens del link mágico
+      hashed_token: magicLinkData.properties.hashed_token,
     }
 
   } catch (error) {

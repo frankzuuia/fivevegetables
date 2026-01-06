@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { User, Phone, Mail, MapPin, FileText, MessageCircle, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { ClientQRCode } from '@/components/cliente/ClientQRCode'
 
 export function PerfilCliente() {
   const supabase = createClient()
@@ -239,6 +240,14 @@ export function PerfilCliente() {
           </div>
         </div>
       )}
+      
+      {/* QR Code para Login Rápido */}
+      <div className="rounded-lg border border-morph-gray-200 bg-white p-6">
+        <h3 className="mb-4 text-center text-lg font-bold text-morph-gray-900">
+          🔐 Mi Código QR
+        </h3>
+        <ClientQRCode size={180} />
+      </div>
       
       {/* Logout Button */}
       <button
