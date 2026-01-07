@@ -157,50 +157,48 @@ export function GestionProductos() {
               </h3>
 
               {/* Price Editor */}
-              <div className="mt-3 flex items-center justify-between border-t border-morph-gray-100 pt-3">
+              <div className="mt-3 border-t border-morph-gray-100 pt-3">
                 {editingId === product.id ? (
-                  <div className="flex w-full flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500">$</span>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500">$</span>
                       <input
                         type="number"
+                        step="0.01"
                         value={editPrice}
                         onChange={(e) => setEditPrice(e.target.value)}
-                        className="flex-1 rounded border border-morph-primary-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
+                        className="w-20 rounded border border-morph-primary-300 px-1.5 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
                         autoFocus
                       />
                       <select
                         value={editUom}
                         onChange={(e) => setEditUom(e.target.value)}
-                        className="rounded border border-morph-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
+                        className="rounded border border-morph-gray-300 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
                       >
                         <option value="kg">kg</option>
                         <option value="g">g</option>
-                        <option value="Unidades">Unidades</option>
+                        <option value="Unidades">Unid</option>
                       </select>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
                       <button
                         onClick={() => handleSavePrice(product)}
                         disabled={updatePriceMutation.isPending}
-                        className="flex-1 rounded bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-200 disabled:opacity-50"
+                        className="flex-1 rounded bg-green-500 px-2 py-1 text-xs font-medium text-white hover:bg-green-600 disabled:opacity-50"
                       >
-                        {updatePriceMutation.isPending ? (
-                          <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-green-700 border-t-transparent" />
-                        ) : (
-                          'Guardar'
-                        )}
+                        {updatePriceMutation.isPending ? 'Guardando...' : 'Guardar'}
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="rounded bg-red-100 p-1.5 text-red-700 hover:bg-red-200"
+                        disabled={updatePriceMutation.isPending}
+                        className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-300"
                       >
-                        <X className="h-4 w-4" />
+                        ✕
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <>
+                  <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-xs text-morph-gray-500">Precio Base</span>
                       <div className="flex items-baseline gap-1">
@@ -220,7 +218,8 @@ export function GestionProductos() {
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                  </>
+                  </div>
+                )}
                 )}
               </div>
             </div>
