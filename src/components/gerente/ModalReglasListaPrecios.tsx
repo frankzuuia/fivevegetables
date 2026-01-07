@@ -99,7 +99,7 @@ export function ModalReglasListaPrecios({
 
     setRules([...rules, completeRule])
     setNewRule({ compute_price: 'fixed' })
-    setIsCreatingRule(false)
+    // Don't close the form - let the buttons decide
     toast.success(`Regla agregada: ${product.name}`)
   }
 
