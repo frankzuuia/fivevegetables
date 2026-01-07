@@ -246,28 +246,17 @@ export async function createPriceList(input: z.infer<typeof CreatePriceListSchem
 }
 
 /**
- * Actualizar lista de precios en Odoo y Supabase
+ * Actualizar lista de precios
+ * Docs: Usar write en product.pricelist para actualizar nombre
  */
 export async function updatePriceList(input: z.infer<typeof UpdatePriceListSchema>) {
   try {
     const validated = UpdatePriceListSchema.parse(input)
     const supabase = await createClient()
 
-    // Verificar que sea gerente
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: 'No autenticado' }
+    console.log('[updatePriceList] Starting update:', validated)
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'gerente') {
-      return { success: false, error: 'Solo gerentes pueden actualizar listas' }
-    }
-
-    // Obtener odoo_pricelist_id
+    // Get odoo_pricelist_id
     const { data: priceList } = await supabase
       .from('price_lists')
       .select('odoo_pricelist_id')
@@ -275,18 +264,22 @@ export async function updatePriceList(input: z.infer<typeof UpdatePriceListSchem
       .single()
 
     if (!priceList) {
-      return { success: false, error: 'Lista de precios no encontrada' }
+      return { success: false, error: 'Lista no encontrada' }
     }
 
-    // Actualizar en Odoo
-    try {
-      const { updatePriceListInOdoo } = await import('@/lib/odoo/client')
-      await updatePriceListInOdoo(priceList.odoo_pricelist_id, {
-        name: validated.name,
-      })
-    } catch (odooError) {
-      console.error('[Odoo Update Pricelist Error]', odooError)
-      return { success: false, error: 'Error al actualizar en Odoo' }
+    // Actualizar en Odoo si tiene odoo_pricelist_id
+    if (priceList.odoo_pricelist_id) {
+      try {
+        const { updateProductInOdoo } = await import('@/lib/odoo/client')
+        // Use updateProductInOdoo which works for any model with write method
+        await updateProductInOdoo(priceList.odoo_pricelist_id, {
+          name: validated.name,
+        })
+        console.log('[updatePriceList] Odoo updated successfully')
+      } catch (odooError) {
+        console.error('[Odoo Update Pricelist Error]', odooError)
+        return { success: false, error: 'Error al actualizar en Odoo' }
+      }
     }
 
     // Actualizar en Supabase
@@ -307,7 +300,10 @@ export async function updatePriceList(input: z.infer<typeof UpdatePriceListSchem
 
     revalidatePath('/dashboard/gerente')
 
-    return { success: true, message: 'Lista de precios actualizada exitosamente' }
+    return {
+      success: true,
+      message: 'Lista de precios actualizada exitosamente',
+    }
 
   } catch (error) {
     if (error instanceof z.ZodError) {
