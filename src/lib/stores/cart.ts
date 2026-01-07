@@ -56,7 +56,7 @@ export const useCartStore = create<CartStore>()(
               {
                 product,
                 quantity: Math.min(quantity, 99),
-                unitPrice: product.base_price,
+                unitPrice: product.list_price,
               },
             ],
           })

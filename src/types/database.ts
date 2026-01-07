@@ -204,10 +204,10 @@ export interface Database {
           name: string
           description: string | null
           image_url: string | null
-          base_price: number
-          stock_quantity: number
+          list_price: number
+          stock_level: number
           category: string | null
-          unit_of_measure: string
+          uom: string
           active: boolean
           created_at: string
           updated_at: string
@@ -220,10 +220,10 @@ export interface Database {
           name: string
           description?: string | null
           image_url?: string | null
-          base_price: number
-          stock_quantity?: number
+          list_price: number
+          stock_level?: number
           category?: string | null
-          unit_of_measure?: string
+          uom?: string
           active?: boolean
           created_at?: string
           updated_at?: string
@@ -236,10 +236,10 @@ export interface Database {
           name?: string
           description?: string | null
           image_url?: string | null
-          base_price?: number
-          stock_quantity?: number
+          list_price?: number
+          stock_level?: number
           category?: string | null
-          unit_of_measure?: string
+          uom?: string
           active?: boolean
           created_at?: string
           updated_at?: string

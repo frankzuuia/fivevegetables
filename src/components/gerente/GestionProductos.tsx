@@ -18,7 +18,7 @@ interface Product {
   name: string
   display_name: string
   image_url: string
-  base_price: number
+  list_price: number
   qty_available: number // Stock from Odoo (synced)
   odoo_product_id: number
   uom_name: string
@@ -71,7 +71,7 @@ export function GestionProductos() {
 
   const handleEditClick = (product: Product) => {
     setEditingId(product.id)
-    setEditPrice(product.base_price.toString())
+    setEditPrice(product.list_price.toString())
   }
 
   const handleSavePrice = (product: Product) => {
@@ -185,7 +185,7 @@ export function GestionProductos() {
                     <div className="flex flex-col">
                       <span className="text-xs text-morph-gray-500">Precio Base</span>
                       <span className="text-lg font-bold text-morph-primary-600">
-                        ${product.base_price?.toFixed(2)}
+                        ${product.list_price?.toFixed(2)}
                       </span>
                     </div>
                     <Button

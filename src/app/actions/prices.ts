@@ -253,9 +253,9 @@ export async function getPersonalizedCatalog(
     // 3. CALCULAR PRECIOS PERSONALIZADOS
     const personalizedProducts: PersonalizedProduct[] = products.map((product) => {
       const discount = pricelist.discount_percentage / 100
-      const personalizedPrice = product.base_price * (1 - discount)
-      const savingsAmount = product.base_price - personalizedPrice
-      const savingsPercentage = (savingsAmount / product.base_price) * 100
+      const personalizedPrice = product.list_price * (1 - discount)
+      const savingsAmount = product.list_price - personalizedPrice
+      const savingsPercentage = (savingsAmount / product.list_price) * 100
 
       return {
         id: product.id,
@@ -263,15 +263,15 @@ export async function getPersonalizedCatalog(
         name: product.name,
         description: product.description,
         imageUrl: product.image_url,
-        basePrice: product.base_price,
+        basePrice: product.list_price,
         personalizedPrice: Number(personalizedPrice.toFixed(2)),
         savingsAmount: Number(savingsAmount.toFixed(2)),
         savingsPercentage: Number(savingsPercentage.toFixed(2)),
         pricelistType: pricelist.type,
         pricelistName: pricelist.name,
-        stockQuantity: product.stock_quantity,
+        stockQuantity: product.stock_level,
         category: product.category,
-        unitOfMeasure: product.unit_of_measure,
+        unitOfMeasure: product.uom,
       }
     })
 
