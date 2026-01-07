@@ -36,11 +36,12 @@ export async function POST(request: NextRequest) {
 
     // 2. Sincronizar cada lista
     for (const odooPricelist of odooPricelists) {
-      // Verificar si ya existe
+      // Verificar si ya existe por odoo_pricelist_id
       const { data: existing } = await supabase
         .from('price_lists')
         .select('id')
-        .eq('odoo_id', odooPricelist.id)
+        .eq('odoo_pricelist_id', odooPricelist.id)
+        .eq('store_id', storeId)
         .single()
 
       const currencyCode = Array.isArray(odooPricelist.currency_id)
@@ -53,22 +54,23 @@ export async function POST(request: NextRequest) {
           .from('price_lists')
           .update({
             name: odooPricelist.name,
-            currency: currencyCode,
             active: odooPricelist.active,
             updated_at: new Date().toISOString()
           })
           .eq('id', existing.id)
 
         console.log(`Updated pricelist: ${odooPricelist.name}`)
+        syncedPricelists++
       } else {
         // Crear nueva
         const { data: newPricelist } = await supabase
           .from('price_lists')
           .insert({
-            odoo_id: odooPricelist.id,
+            odoo_pricelist_id: odooPricelist.id,
             name: odooPricelist.name,
             store_id: storeId,
-            currency: currencyCode,
+            type: 'especial', // Default type
+            discount_percentage: 0,
             active: odooPricelist.active
           })
           .select()
