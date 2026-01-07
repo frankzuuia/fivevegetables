@@ -585,6 +585,64 @@ export async function deletePriceListInOdoo(pricelistId: number): Promise<void> 
   })
 }
 
+/**
+ * Actualizar items/reglas de precio en Odoo
+ * En Odoo, los items se gestionan mediante el campo item_ids en product.pricelist
+ */
+export async function updatePriceListItemsInOdoo(
+  pricelistId: number,
+  items: Array<{
+    product_id: number
+    compute_price: 'fixed' | 'percentage'
+    fixed_price?: number
+    percent_price?: number
+  }>
+): Promise<void> {
+  const uid = await authenticateOdoo()
+
+  // Primero, eliminar todos los items existentes
+  // Luego crear los nuevos items
+  const itemCommands = items.map(item => [0, 0, {
+    applied_on: '1_product', // Aplicar a producto específico
+    product_tmpl_id: item.product_id,
+    compute_price: item.compute_price,
+    fixed_price: item.fixed_price || 0,
+    percent_price: item.percent_price || 0,
+    min_quantity: 0,
+  }])
+
+  return new Promise((resolve, reject) => {
+    objectClient.methodCall(
+      'execute_kw',
+      [
+        ODOO_DB,
+        uid,
+        ODOO_API_KEY,
+        'product.pricelist',
+        'write',
+        [
+          [pricelistId],
+          {
+            item_ids: [
+              [5, 0, 0], // Eliminar todos los items existentes
+              ...itemCommands // Crear nuevos items
+            ]
+          }
+        ],
+      ],
+      (error: any, result: any) => {
+        if (error) {
+          console.error('[Odoo Update PriceList Items Error]', error)
+          reject(error)
+          return
+        }
+        console.log(`[Odoo] PriceList ${pricelistId} items updated successfully`)
+        resolve()
+      }
+    )
+  })
+}
+
 // =====================================================
 // PARTNER MANAGEMENT
 // =====================================================
