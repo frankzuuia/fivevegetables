@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
         discount_percent: discountPercent || 0,
         type: type || 'standard',
         odoo_id: odooId,
-        active: true
       })
       .select()
       .single()
@@ -90,7 +89,6 @@ export async function GET(request: NextRequest) {
       .from('price_lists')
       .select('*')
       .eq('store_id', storeId)
-      .eq('active', true)
       .order('created_at', { ascending: false })
 
     if (error) throw error
