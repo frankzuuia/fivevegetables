@@ -133,9 +133,11 @@ export async function GET(request: NextRequest) {
       description: product.description,
       imageUrl: product.image_url,
       basePrice: product.list_price,
+      price: product.list_price, // Alias for modal compatibility
       stockQuantity: product.stock_level,
       category: product.category,
       unitOfMeasure: product.uom,
+      unit: product.uom, // Alias for modal compatibility
       active: product.active,
     }))
 
