@@ -50,10 +50,12 @@ export function GestionProductos() {
   // Update price mutation
   const updatePriceMutation = useMutation({
     mutationFn: async ({ productId, odooProductId, newPrice }: { productId: string, odooProductId: number, newPrice: number }) => {
+      console.log('[GestionProductos] Updating price:', { productId, odooProductId, newPrice })
       const { updateProductPrice } = await import('@/app/actions/products')
       return updateProductPrice({ productId, odooProductId, newPrice })
     },
     onSuccess: (result) => {
+      console.log('[GestionProductos] Update result:', result)
       if (result.success) {
         toast.success(result.message)
         queryClient.invalidateQueries({ queryKey: ['products-manager'] })
@@ -62,6 +64,10 @@ export function GestionProductos() {
         toast.error(result.error)
       }
     },
+    onError: (error) => {
+      console.error('[GestionProductos] Update error:', error)
+      toast.error('Error al actualizar precio')
+    }
   })
 
   // Filter products
