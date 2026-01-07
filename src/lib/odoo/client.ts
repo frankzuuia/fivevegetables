@@ -508,7 +508,6 @@ export async function createPriceListInOdoo(values: {
         'create',
         [{
           name: values.name,
-          discount_policy: 'without_discount',
           active: true,
         }],
       ],
