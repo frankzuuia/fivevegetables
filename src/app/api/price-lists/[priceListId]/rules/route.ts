@@ -107,28 +107,30 @@ export async function GET(
 
     const { data: items, error } = await supabase
       .from('price_list_items')
-      .select(`
-        *,
-        products (
-          id,
-          name,
-          price,
-          unit
-        )
-      `)
+      .select('*')
       .eq('price_list_id', priceListId)
 
     if (error) throw error
 
-    // Mapear para incluir product_name
-    const rules = items?.map(item => ({
-      id: item.id,
-      product_id: item.product_id,
-      product_name: (item.products as any)?.name || 'Producto desconocido',
-      compute_price: item.compute_price,
-      fixed_price: item.fixed_price,
-      percent_price: item.percent_price
-    }))
+    // Get product names from products_cache
+    const rules = await Promise.all(
+      (items || []).map(async (item) => {
+        const { data: product } = await supabase
+          .from('products_cache')
+          .select('name')
+          .eq('id', item.product_id)
+          .single()
+
+        return {
+          id: item.id,
+          product_id: item.product_id,
+          product_name: product?.name || 'Producto desconocido',
+          compute_price: item.compute_price,
+          fixed_price: item.fixed_price,
+          percent_price: item.percent_price
+        }
+      })
+    )
 
     return NextResponse.json({ rules })
   } catch (error: any) {
