@@ -8,9 +8,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { priceListId: string } }
+  { params }: { params: Promise<{ priceListId: string }> }
 ) {
   try {
+    const { priceListId } = await params
     const supabase = await createClient()
     const { rules } = await request.json()
 
@@ -18,7 +19,7 @@ export async function POST(
     const { data: priceList, error: plError } = await supabase
       .from('price_lists')
       .select('odoo_pricelist_id')
-      .eq('id', params.priceListId)
+      .eq('id', priceListId)
       .single()
 
     if (plError || !priceList) {
@@ -30,12 +31,12 @@ export async function POST(
     await supabase
       .from('price_list_items')
       .delete()
-      .eq('price_list_id', params.priceListId)
+      .eq('price_list_id', priceListId)
 
     // Insertar nuevas reglas en Supabase
     if (rules && rules.length > 0) {
       const itemsToInsert = rules.map((rule: any) => ({
-        price_list_id: params.priceListId,
+        price_list_id: priceListId,
         product_id: rule.product_id,
         compute_price: rule.compute_price,
         fixed_price: rule.fixed_price || null,
@@ -98,9 +99,10 @@ export async function POST(
 // GET: Obtener reglas de una lista
 export async function GET(
   request: NextRequest,
-  { params }: { params: { priceListId: string } }
+  { params }: { params: Promise<{ priceListId: string }> }
 ) {
   try {
+    const { priceListId } = await params
     const supabase = await createClient()
 
     const { data: items, error } = await supabase
@@ -114,7 +116,7 @@ export async function GET(
           unit
         )
       `)
-      .eq('price_list_id', params.priceListId)
+      .eq('price_list_id', priceListId)
 
     if (error) throw error
 
