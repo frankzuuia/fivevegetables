@@ -156,7 +156,7 @@ export function ModalReglasListaPrecios({
                   <option value="">Todos los productos</option>
                   {products.map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.name} - ${product.price.toFixed(2)} / {product.unit}
+                      {product.name} {product.price ? `- $${product.price.toFixed(2)}` : ''} {product.unit ? `/ ${product.unit}` : ''}
                     </option>
                   ))}
                 </select>
