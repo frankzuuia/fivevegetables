@@ -237,20 +237,6 @@ export async function deletePriceList(input: z.infer<typeof DeletePriceListSchem
     const validated = DeletePriceListSchema.parse(input)
     const supabase = await createClient()
 
-    // Verificar que sea gerente
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: 'No autenticado' }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'gerente') {
-      return { success: false, error: 'Solo gerentes pueden eliminar listas' }
-    }
-
     // Obtener odoo_pricelist_id
     const { data: priceList } = await supabase
       .from('price_lists')
