@@ -9,10 +9,15 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+// =====================================================
+// SCHEMAS
+// =====================================================
+
 const UpdateProductPriceSchema = z.object({
   productId: z.string().uuid(),
   odooProductId: z.number(),
   newPrice: z.number().positive(),
+  uomId: z.number().optional(), // ID of uom.uom in Odoo
 })
 
 const CreatePriceListSchema = z.object({
