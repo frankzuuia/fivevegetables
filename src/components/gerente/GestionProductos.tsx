@@ -28,6 +28,7 @@ export function GestionProductos() {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editPrice, setEditPrice] = useState<string>('')
+  const [editUom, setEditUom] = useState<string>('')
 
   const queryClient = useQueryClient()
   const supabase = createClient()
@@ -72,6 +73,7 @@ export function GestionProductos() {
   const handleEditClick = (product: Product) => {
     setEditingId(product.id)
     setEditPrice(product.list_price.toString())
+    setEditUom(product.uom_name || 'kg')
   }
 
   const handleSavePrice = (product: Product) => {
@@ -157,40 +159,58 @@ export function GestionProductos() {
               {/* Price Editor */}
               <div className="mt-3 flex items-center justify-between border-t border-morph-gray-100 pt-3">
                 {editingId === product.id ? (
-                  <div className="flex w-full items-center gap-2">
-                    <span className="text-gray-500">$</span>
-                    <input
-                      type="number"
-                      value={editPrice}
-                      onChange={(e) => setEditPrice(e.target.value)}
-                      className="w-full rounded border border-morph-primary-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleSavePrice(product)}
-                      disabled={updatePriceMutation.isPending}
-                      className="rounded bg-green-100 p-1 text-green-700 hover:bg-green-200 disabled:opacity-50"
-                    >
-                      {updatePriceMutation.isPending ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-700 border-t-transparent" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="rounded bg-red-100 p-1 text-red-700 hover:bg-red-200"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                  <div className="flex w-full flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">$</span>
+                      <input
+                        type="number"
+                        value={editPrice}
+                        onChange={(e) => setEditPrice(e.target.value)}
+                        className="flex-1 rounded border border-morph-primary-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
+                        autoFocus
+                      />
+                      <select
+                        value={editUom}
+                        onChange={(e) => setEditUom(e.target.value)}
+                        className="rounded border border-morph-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
+                      >
+                        <option value="kg">kg</option>
+                        <option value="g">g</option>
+                        <option value="Unidades">Unidades</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleSavePrice(product)}
+                        disabled={updatePriceMutation.isPending}
+                        className="flex-1 rounded bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-200 disabled:opacity-50"
+                      >
+                        {updatePriceMutation.isPending ? (
+                          <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-green-700 border-t-transparent" />
+                        ) : (
+                          'Guardar'
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="rounded bg-red-100 p-1.5 text-red-700 hover:bg-red-200"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
                     <div className="flex flex-col">
                       <span className="text-xs text-morph-gray-500">Precio Base</span>
-                      <span className="text-lg font-bold text-morph-primary-600">
-                        ${product.list_price?.toFixed(2)}
-                      </span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-morph-primary-600">
+                          ${product.list_price?.toFixed(2)}
+                        </span>
+                        <span className="text-xs text-morph-gray-500">
+                          / {product.uom_name || 'kg'}
+                        </span>
+                      </div>
                     </div>
                     <Button
                       size="sm"
