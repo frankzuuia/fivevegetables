@@ -194,32 +194,14 @@ export function GestorListasPrecios() {
           </p>
         </div>
 
-        <div className="flex gap-3">
-          <Button
-            onClick={async () => {
-              const res = await fetch('/api/odoo/sync-pricelists', { method: 'POST' })
-              const data = await res.json()
-              if (data.success) {
-                toast.success(data.message)
-                queryClient.invalidateQueries({ queryKey: ['price-lists'] })
-              } else {
-                toast.error(data.error || 'Error al sincronizar')
-              }
-            }}
-            variant="outline"
-          >
-            <RefreshCw className="h-5 w-5" />
-            Sync Pricelists
-          </Button>
-          <Button
-            onClick={() => setIsCreating(!isCreating)}
-            variant="primary"
-            disabled={createMutation.isPending}
-          >
-            <Plus className="h-5 w-5" />
-            Nueva Lista
-          </Button>
-        </div>
+        <Button
+          onClick={() => setIsCreating(!isCreating)}
+          variant="primary"
+          disabled={createMutation.isPending}
+        >
+          <Plus className="h-5 w-5" />
+          Nueva Lista
+        </Button>
       </div>
 
       {/* Create/Edit Form */}
