@@ -14,13 +14,25 @@ export async function POST(
     const supabase = await createClient()
     const { rules } = await request.json()
 
+    // Get price list with odoo_pricelist_id
+    const { data: priceList, error: plError } = await supabase
+      .from('price_lists')
+      .select('odoo_pricelist_id')
+      .eq('id', params.priceListId)
+      .single()
+
+    if (plError || !priceList) {
+      console.error('[price-list-rules] Error fetching price list:', plError)
+      return NextResponse.json({ error: 'Lista de precios no encontrada' }, { status: 404 })
+    }
+
     // Eliminar reglas existentes
     await supabase
       .from('price_list_items')
       .delete()
       .eq('price_list_id', params.priceListId)
 
-    // Insertar nuevas reglas
+    // Insertar nuevas reglas en Supabase
     if (rules && rules.length > 0) {
       const itemsToInsert = rules.map((rule: any) => ({
         price_list_id: params.priceListId,
@@ -35,7 +47,42 @@ export async function POST(
         .from('price_list_items')
         .insert(itemsToInsert)
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('[price-list-rules] Error inserting rules:', insertError)
+        throw insertError
+      }
+    }
+
+    // Sync to Odoo if price list has odoo_pricelist_id
+    if (priceList.odoo_pricelist_id && rules && rules.length > 0) {
+      try {
+        const { updatePriceListItemsInOdoo } = await import('@/lib/odoo/client')
+
+        // Map rules to Odoo format con odoo_product_id
+        const odooItems = await Promise.all(
+          rules.map(async (rule: any) => {
+            // Get odoo_product_id from products_cache
+            const { data: product } = await supabase
+              .from('products_cache')
+              .select('odoo_product_id')
+              .eq('id', rule.product_id)
+              .single()
+
+            return {
+              product_id: product?.odoo_product_id || 0,
+              compute_price: rule.compute_price,
+              fixed_price: rule.fixed_price,
+              percent_price: rule.percent_price,
+            }
+          })
+        )
+
+        await updatePriceListItemsInOdoo(priceList.odoo_pricelist_id, odooItems)
+        console.log('[price-list-rules] Synced to Odoo successfully')
+      } catch (odooError) {
+        console.error('[price-list-rules] Error syncing to Odoo:', odooError)
+        // Continue even if Odoo fails
+      }
     }
 
     return NextResponse.json({
