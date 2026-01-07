@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       console.error('[sync-pricelists] Auth Error:', authError)
+      console.error('[sync-pricelists] Headers:', Object.fromEntries(request.headers))
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
