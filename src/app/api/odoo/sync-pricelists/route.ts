@@ -16,18 +16,15 @@ export async function POST(request: NextRequest) {
 
     console.log('[sync-pricelists] Starting sync for store:', storeId)
 
-    // Obtener credenciales de Odoo desde Supabase
-    const { data: odooConfig } = await supabase
-      .from('odoo_config')
-      .select('*')
-      .eq('store_id', storeId)
-      .single()
+    // Obtener price lists de Odoo directamente usando variables de entorno
+    const url = process.env.ODOO_URL
+    const database = process.env.ODOO_DATABASE
+    const username = process.env.ODOO_USERNAME
+    const password = process.env.ODOO_PASSWORD
 
-    if (!odooConfig) {
-      return NextResponse.json({ error: 'Configuración de Odoo no encontrada' }, { status: 400 })
+    if (!url || !database || !username || !password) {
+      return NextResponse.json({ error: 'Credenciales de Odoo no configuradas en variables de entorno' }, { status: 400 })
     }
-
-    const { url, database, username, password } = odooConfig
 
     // 1. Obtener listas de precios desde Odoo
     console.log('Fetching pricelists from Odoo...')
