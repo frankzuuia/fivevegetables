@@ -110,11 +110,12 @@ export async function getProductsWithStock() {
           'list_price',
           'qty_available',
           'categ_id',
+          'image_1920',
         ],
         limit: 1000,
       }
     )
-    
+
     return products
   } catch (error) {
     console.error('[Odoo] Error getting products', error)
@@ -136,7 +137,7 @@ export async function getPriceLists() {
         limit: 100,
       }
     )
-    
+
     return priceLists
   } catch (error) {
     console.error('[Odoo] Error getting price lists', error)
@@ -170,7 +171,7 @@ export async function getPartners() {
         limit: 1000,
       }
     )
-    
+
     return partners
   } catch (error) {
     console.error('[Odoo] Error getting partners', error)
@@ -210,7 +211,7 @@ export async function createSaleOrder(orderData: {
         },
       ]
     )
-    
+
     console.log(`[Odoo] Sale order created with ID: ${orderId}`)
     return orderId
   } catch (error) {
@@ -237,7 +238,7 @@ export async function updatePartnerPricelist(
         },
       ]
     )
-    
+
     console.log(
       `[Odoo] Partner ${partnerId} pricelist updated to ${pricelistId}`
     )
@@ -261,11 +262,11 @@ export async function getOrderInvoiceStatus(orderId: number) {
         fields: ['invoice_status', 'invoice_ids'],
       }
     )
-    
+
     if (!order || order.length === 0) {
       throw new Error(`Order ${orderId} not found in Odoo`)
     }
-    
+
     return {
       invoiceStatus: order[0].invoice_status,
       invoiceIds: order[0].invoice_ids || [],
@@ -319,7 +320,7 @@ export async function createPartnerInOdoo(data: {
       }],
       {}
     )
-    
+
     console.log(`[Odoo] Partner created: ${partnerId} - ${data.name}`)
     return partnerId
   } catch (error) {
@@ -345,14 +346,14 @@ export async function createInvoice(
       [[saleOrderId]],
       {}
     )
-    
+
     if (!invoiceIds || invoiceIds.length === 0) {
       throw new Error('No se pudo crear factura desde sale.order')
     }
-    
+
     const invoiceId = invoiceIds[0]
     console.log(`[Odoo] Invoice created: ${invoiceId} from SO ${saleOrderId}`)
-    
+
     // 2. Actualizar campos específicos CFDI si se proporcionan
     if (invoiceData.l10n_mx_edi_usage) {
       await executeKw(
@@ -364,7 +365,7 @@ export async function createInvoice(
         {}
       )
     }
-    
+
     // 3. Confirmar factura (draft → posted)
     await executeKw(
       'account.move',
@@ -372,11 +373,11 @@ export async function createInvoice(
       [[invoiceId]],
       {}
     )
-    
+
     console.log(`[Odoo] Invoice ${invoiceId} posted successfully`)
-    
+
     return invoiceId
-    
+
   } catch (error) {
     console.error('[Odoo] Error creating invoice', error)
     throw error
@@ -396,20 +397,20 @@ export async function getInvoicePDF(invoiceId: number): Promise<string> {
         fields: ['l10n_mx_edi_cfdi_uuid', 'name']
       }
     )
-    
+
     if (!invoice || invoice.length === 0) {
       throw new Error(`Invoice ${invoiceId} not found in Odoo`)
     }
-    
+
     // Construir URL del PDF
     // Odoo expone reportes en /report/pdf/...
     const odooUrl = process.env.ODOO_URL || ''
     const pdfUrl = `${odooUrl}/web/content/account.move/${invoiceId}/invoice_pdf_report_file?download=true`
-    
+
     console.log(`[Odoo] Invoice PDF URL generated for ${invoiceId}`)
-    
+
     return pdfUrl
-    
+
   } catch (error) {
     console.error('[Odoo] Error getting invoice PDF', error)
     throw error
@@ -422,7 +423,7 @@ export async function getInvoicePDF(invoiceId: number): Promise<string> {
  */
 export async function updateProductInOdoo(productId: number, values: Record<string, any>): Promise<void> {
   const uid = await authenticateOdoo()
-  
+
   return new Promise((resolve, reject) => {
     objectClient.methodCall(
       'execute_kw',
@@ -459,7 +460,7 @@ export async function createPriceListInOdoo(values: {
   discount_percent: number
 }): Promise<number> {
   const uid = await authenticateOdoo()
-  
+
   return new Promise((resolve, reject) => {
     objectClient.methodCall(
       'execute_kw',
@@ -493,7 +494,7 @@ export async function createPriceListInOdoo(values: {
  */
 export async function updatePriceListInOdoo(pricelistId: number, values: Record<string, any>): Promise<void> {
   const uid = await authenticateOdoo()
-  
+
   return new Promise((resolve, reject) => {
     objectClient.methodCall(
       'execute_kw',
@@ -523,7 +524,7 @@ export async function updatePriceListInOdoo(pricelistId: number, values: Record<
  */
 export async function deletePriceListInOdoo(pricelistId: number): Promise<void> {
   const uid = await authenticateOdoo()
-  
+
   return new Promise((resolve, reject) => {
     objectClient.methodCall(
       'execute_kw',
@@ -557,7 +558,7 @@ export async function deletePriceListInOdoo(pricelistId: number): Promise<void> 
  */
 export async function updatePartnerInOdoo(partnerId: number, values: Record<string, any>): Promise<void> {
   const uid = await authenticateOdoo()
-  
+
   return new Promise((resolve, reject) => {
     objectClient.methodCall(
       'execute_kw',
@@ -587,7 +588,7 @@ export async function updatePartnerInOdoo(partnerId: number, values: Record<stri
  */
 export async function deletePartnerInOdoo(partnerId: number): Promise<void> {
   const uid = await authenticateOdoo()
-  
+
   return new Promise((resolve, reject) => {
     objectClient.methodCall(
       'execute_kw',

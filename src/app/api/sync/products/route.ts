@@ -41,7 +41,9 @@ export async function POST(request: NextRequest) {
           odoo_product_id: product.id,
           name: product.name || 'Sin nombre',
           description: product.description || null,
-          image_url: product.image_url || null,
+          image_url: product.image_1920
+            ? `data:image/png;base64,${product.image_1920}`
+            : null,
           list_price: product.list_price || 0,
           stock_level: product.qty_available || 0,
           category: Array.isArray(product.categ_id) ? product.categ_id[1] : 'General',
