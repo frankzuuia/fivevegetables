@@ -169,9 +169,13 @@ export function GestionProductos() {
                     <button
                       onClick={() => handleSavePrice(product)}
                       disabled={updatePriceMutation.isPending}
-                      className="rounded bg-green-100 p-1 text-green-700 hover:bg-green-200"
+                      className="rounded bg-green-100 p-1 text-green-700 hover:bg-green-200 disabled:opacity-50"
                     >
-                      <Check className="h-4 w-4" />
+                      {updatePriceMutation.isPending ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-700 border-t-transparent" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
                     </button>
                     <button
                       onClick={() => setEditingId(null)}

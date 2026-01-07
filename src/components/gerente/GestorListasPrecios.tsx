@@ -58,12 +58,24 @@ export function GestorListasPrecios() {
     },
   })
 
+
   // Create mutation - ahora crea en Dashboard Y Odoo
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Get session token
+      const { data: { session } } = await supabase.auth.getSession()
+
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
       const response = await fetch('/api/price-lists', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify({
           name: data.name,
