@@ -38,7 +38,8 @@ const AssignPriceListSchema = z.object({
 })
 
 /**
- * Actualizar precio de producto en Odoo
+ * Actualizar precio (y opcionalmente unidad) de producto en Odoo
+ * Docs: uom_id debe ser el ID de uom.uom en Odoo
  */
 export async function updateProductPrice(input: z.infer<typeof UpdateProductPriceSchema>) {
   try {
@@ -50,9 +51,16 @@ export async function updateProductPrice(input: z.infer<typeof UpdateProductPric
     // Actualizar en Odoo
     try {
       const { updateProductInOdoo } = await import('@/lib/odoo/client')
-      await updateProductInOdoo(validated.odooProductId, {
+      const odooValues: Record<string, any> = {
         list_price: validated.newPrice,
-      })
+      }
+
+      // Si se proporciona uom_id, actualizar también la unidad
+      if (validated.uomId) {
+        odooValues.uom_id = validated.uomId
+      }
+
+      await updateProductInOdoo(validated.odooProductId, odooValues)
       console.log('[updateProductPrice] Odoo updated successfully')
     } catch (odooError) {
       console.error('[Odoo Update Error]', odooError)
@@ -60,12 +68,17 @@ export async function updateProductPrice(input: z.infer<typeof UpdateProductPric
     }
 
     // Actualizar en Supabase cache
+    const updateData: any = {
+      list_price: validated.newPrice,
+      last_sync: new Date().toISOString(),
+    }
+
+    // Note: uom is stored as text in products_cache, would need to map ID to name
+    // For now just sync price, UoM will sync on next full product sync
+
     const { error: updateError } = await supabase
       .from('products_cache')
-      .update({
-        list_price: validated.newPrice,
-        last_sync: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', validated.productId)
 
     if (updateError) {

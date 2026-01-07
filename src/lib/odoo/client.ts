@@ -763,6 +763,45 @@ export async function archivePriceListInOdoo(pricelistId: number): Promise<void>
   })
 }
 
+/**
+ * Obtener unidades de medida desde Odoo
+ * Docs: search_read en uom.uom model
+ */
+export async function getUnitsOfMeasureFromOdoo(): Promise<Array<{
+  id: number
+  name: string
+  category_id: [number, string]
+}>> {
+  const uid = await authenticateOdoo()
+
+  return new Promise((resolve, reject) => {
+    objectClient.methodCall(
+      'execute_kw',
+      [
+        ODOO_DB,
+        uid,
+        ODOO_API_KEY,
+        'uom.uom',
+        'search_read',
+        [[['active', '=', true]]],
+        {
+          fields: ['id', 'name', 'category_id'],
+          limit: 100
+        }
+      ],
+      (error: any, result: any) => {
+        if (error) {
+          console.error('[Odoo Get UoMs Error]', error)
+          reject(error)
+          return
+        }
+        console.log(`[Odoo] Retrieved ${result.length} units of measure`)
+        resolve(result)
+      }
+    )
+  })
+}
+
 // =====================================================
 // PARTNER MANAGEMENT
 // =====================================================
