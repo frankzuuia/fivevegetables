@@ -260,7 +260,10 @@ export function ModalReglasListaPrecios({
                   Guardar y cerrar
                 </Button>
                 <Button
-                  onClick={handleAddRule}
+                  onClick={() => {
+                    handleAddRule()
+                    // Keep form open for adding more rules
+                  }}
                   variant="outline"
                 >
                   Guardar y crear nuevo
