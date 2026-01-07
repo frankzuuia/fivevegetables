@@ -143,17 +143,20 @@ export async function GET(request: NextRequest) {
       products: baseProducts,
       hasPersonalizedPricing: false,
     })
-  } catch (error) {
+  } catch (error: any) {
+    console.error('[Products List] Caught error:', error)
+    console.error('[Products List] Error type:', error.constructor.name)
+    console.error('[Products List] Error message:', error.message)
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Parámetros inválidos', details: error.issues },
+        { error: 'Parámetros inválidos', details: error.errors },
         { status: 400 }
       )
     }
 
-    console.error('[Products List API Error]', error)
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor', details: error.message },
       { status: 500 }
     )
   }
