@@ -194,14 +194,32 @@ export function GestorListasPrecios() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsCreating(!isCreating)}
-          variant="primary"
-          disabled={createMutation.isPending}
-        >
-          <Plus className="h-5 w-5" />
-          Nueva Lista
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={async () => {
+              const { syncPriceListsFromOdoo } = await import('@/app/actions/products')
+              const result = await syncPriceListsFromOdoo()
+              if (result.success) {
+                toast.success(result.message)
+                queryClient.invalidateQueries({ queryKey: ['price-lists'] })
+              } else {
+                toast.error(result.error || 'Error al sincronizar')
+              }
+            }}
+            variant="outline"
+          >
+            <RefreshCw className="h-5 w-5" />
+            Actualizar desde Odoo
+          </Button>
+          <Button
+            onClick={() => setIsCreating(!isCreating)}
+            variant="primary"
+            disabled={createMutation.isPending}
+          >
+            <Plus className="h-5 w-5" />
+            Nueva Lista
+          </Button>
+        </div>
       </div>
 
       {/* Create/Edit Form */}
