@@ -78,8 +78,21 @@ export async function updateProductPrice(input: z.infer<typeof UpdateProductPric
       last_sync: new Date().toISOString(),
     }
 
-    // Note: uom is stored as text in products_cache, would need to map ID to name
-    // For now just sync price, UoM will sync on next full product sync
+    // Si se cambió la UoM, obtener el nombre desde Odoo y actualizar
+    if (validated.uomId) {
+      try {
+        const { getUnitsOfMeasureFromOdoo } = await import('@/lib/odoo/client')
+        const uoms = await getUnitsOfMeasureFromOdoo()
+        const selectedUom = uoms.find(u => u.id === validated.uomId)
+        if (selectedUom) {
+          updateData.uom = selectedUom.name
+          console.log(`[updateProductPrice] UoM updated to: ${selectedUom.name}`)
+        }
+      } catch (uomError) {
+        console.error('[Get UoM Error]', uomError)
+        // Continue even if UoM fetch fails
+      }
+    }
 
     const { error: updateError } = await supabase
       .from('products_cache')
