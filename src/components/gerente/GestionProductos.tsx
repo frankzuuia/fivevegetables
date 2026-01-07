@@ -320,6 +320,17 @@ export function GestionProductos() {
           </p>
         </div>
       )}
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-morph-primary-600 text-white shadow-lg transition-all hover:bg-morph-primary-700 hover:scale-110 active:scale-95"
+          aria-label="Volver arriba"
+        >
+          <ArrowUp className="h-6 w-6" />
+        </button>
+      )}
     </div>
   )
 }
