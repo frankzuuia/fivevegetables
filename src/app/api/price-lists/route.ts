@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         store_id: storeId,
         discount_percentage: discountPercent || 0,
         type: type || 'standard',
-        odoo_id: odooId,
+        odoo_pricelist_id: odooId || null,
       })
       .select()
       .single()
