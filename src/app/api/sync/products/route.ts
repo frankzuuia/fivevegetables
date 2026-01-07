@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
           name: product.name || 'Sin nombre',
           description: product.description || null,
           image_url: product.image_url || null,
-          list_price: product.list_price || 0,
+          base_price: product.list_price || 0,
           stock_quantity: product.qty_available || 0,
           category: Array.isArray(product.categ_id) ? product.categ_id[1] : 'General',
           unit_of_measure: 'kg', // Puedes adaptar esto según tu lógica

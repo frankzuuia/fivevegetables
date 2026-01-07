@@ -18,8 +18,11 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (authError || !user) {
+      console.error('[sync-pricelists] Auth Error:', authError)
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
+
+    console.log('[sync-pricelists] User authenticated:', user.id)
 
     let storeId = user.user_metadata?.store_id
 

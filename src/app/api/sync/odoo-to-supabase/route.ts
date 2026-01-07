@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
             odoo_product_id: product.id,
             name: product.name || 'Sin nombre',
             description: product.description || null,
-            list_price: product.list_price || 0,
+            base_price: product.list_price || 0,
             stock_quantity: product.qty_available || 0,
             category: product.categ_id?.[1] || null,
             active: true,

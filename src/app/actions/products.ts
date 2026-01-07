@@ -74,7 +74,7 @@ export async function updateProductPrice(input: z.infer<typeof UpdateProductPric
     const { error: updateError } = await supabase
       .from('products_cache')
       .update({
-        list_price: validated.newPrice,
+        base_price: validated.newPrice,
         last_sync: new Date().toISOString(),
       })
       .eq('id', validated.productId)
