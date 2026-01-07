@@ -18,8 +18,7 @@ export async function GET() {
             success: true,
             uoms: uoms.map(uom => ({
                 id: uom.id,
-                name: uom.name,
-                category: uom.category_id?.[1] || 'Unknown'
+                name: uom.name
             }))
         })
     } catch (error: any) {

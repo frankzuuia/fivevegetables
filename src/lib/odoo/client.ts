@@ -766,11 +766,11 @@ export async function archivePriceListInOdoo(pricelistId: number): Promise<void>
 /**
  * Obtener unidades de medida desde Odoo
  * Docs: search_read en uom.uom model
+ * Note: category_id doesn't exist in Odoo 19, it's now a string field
  */
 export async function getUnitsOfMeasureFromOdoo(): Promise<Array<{
   id: number
   name: string
-  category_id: [number, string]
 }>> {
   const uid = await authenticateOdoo()
 
@@ -785,7 +785,7 @@ export async function getUnitsOfMeasureFromOdoo(): Promise<Array<{
         'search_read',
         [[['active', '=', true]]],
         {
-          fields: ['id', 'name', 'category_id'],
+          fields: ['id', 'name'],
           limit: 100
         }
       ],
