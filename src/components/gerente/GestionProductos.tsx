@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Search, Edit2, Package, Check, X } from 'lucide-react'
+import { Search, Edit2, Package, Check, X, Power } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
 
@@ -87,6 +87,30 @@ export function GestionProductos() {
     }
   })
 
+  // Toggle active mutation
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ productId, odooProductId, active }: {
+      productId: string
+      odooProductId: number
+      active: boolean
+    }) => {
+      const { toggleProductActive } = await import('@/app/actions/products')
+      return toggleProductActive({ productId, odooProductId, active })
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(result.message)
+        queryClient.invalidateQueries({ queryKey: ['products-manager'] })
+      } else {
+        toast.error(result.error)
+      }
+    },
+    onError: (error) => {
+      console.error('[GestionProductos] Toggle error:', error)
+      toast.error('Error al cambiar estado')
+    }
+  })
+
   // Filter products
   const filteredProducts = products?.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -152,7 +176,8 @@ export function GestionProductos() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="group relative overflow-hidden rounded-xl border border-morph-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+              className={`group relative overflow-hidden rounded-xl border border-morph-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${!product.active ? 'opacity-50 grayscale' : ''
+                }`}
             >
               {/* Image & Stock Badge */}
               <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-lg bg-morph-gray-100">
@@ -168,6 +193,23 @@ export function GestionProductos() {
                     <Package className="h-12 w-12" />
                   </div>
                 )}
+
+                {/* Toggle Active Button */}
+                <button
+                  onClick={() => toggleActiveMutation.mutate({
+                    productId: product.id,
+                    odooProductId: product.odoo_product_id,
+                    active: !product.active
+                  })}
+                  disabled={toggleActiveMutation.isPending}
+                  className={`absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full shadow-sm backdrop-blur-sm transition-all ${product.active
+                      ? 'bg-green-500/90 hover:bg-green-600 text-white'
+                      : 'bg-gray-400/90 hover:bg-gray-500 text-white'
+                    }`}
+                  title={product.active ? 'Desactivar producto' : 'Activar producto'}
+                >
+                  <Power className="h-4 w-4" />
+                </button>
 
                 <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-medium shadow-sm backdrop-blur-sm">
                   <div className={`h-2 w-2 rounded-full ${product.qty_available > 0 ? 'bg-green-500' : 'bg-red-500'}`} />

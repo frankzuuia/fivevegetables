@@ -20,6 +20,12 @@ const UpdateProductPriceSchema = z.object({
   uomId: z.number().optional(), // ID of uom.uom in Odoo
 })
 
+const ToggleProductActiveSchema = z.object({
+  productId: z.string().uuid(),
+  odooProductId: z.number(),
+  active: z.boolean(),
+})
+
 const CreatePriceListSchema = z.object({
   name: z.string().min(1),
   type: z.enum(['mayorista', 'minorista', 'especial']),
@@ -114,6 +120,58 @@ export async function updateProductPrice(input: z.infer<typeof UpdateProductPric
     }
     console.error('[Update Product Price Error]', error)
     return { success: false, error: 'Error al actualizar precio' }
+  }
+}
+
+/**
+ * Activar/Desactivar producto
+ * Docs: Cambiar campo 'active' en product.template
+ */
+export async function toggleProductActive(input: z.infer<typeof ToggleProductActiveSchema>) {
+  try {
+    const validated = ToggleProductActiveSchema.parse(input)
+    const supabase = await createClient()
+
+    console.log('[toggleProductActive] Toggling:', validated)
+
+    // Actualizar en Odoo
+    try {
+      const { updateProductInOdoo } = await import('@/lib/odoo/client')
+      await updateProductInOdoo(validated.odooProductId, {
+        active: validated.active,
+      })
+      console.log(`[toggleProductActive] Odoo updated: active=${validated.active}`)
+    } catch (odooError) {
+      console.error('[Odoo Toggle Active Error]', odooError)
+      return { success: false, error: 'Error al actualizar en Odoo' }
+    }
+
+    // Actualizar en Supabase
+    const { error: updateError } = await supabase
+      .from('products_cache')
+      .update({
+        active: validated.active,
+        last_sync: new Date().toISOString(),
+      })
+      .eq('id', validated.productId)
+
+    if (updateError) {
+      console.error('[Supabase Toggle Active Error]', updateError)
+      return { success: false, error: 'Error al actualizar en Supabase' }
+    }
+
+    revalidatePath('/dashboard/gerente')
+    revalidatePath('/dashboard/vendedor')
+
+    const message = validated.active ? 'Producto activado' : 'Producto desactivado'
+    return { success: true, message }
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.issues[0].message }
+    }
+    console.error('[Toggle Product Active Error]', error)
+    return { success: false, error: 'Error al cambiar estado del producto' }
   }
 }
 
