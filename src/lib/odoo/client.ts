@@ -651,6 +651,118 @@ export async function updatePriceListItemsInOdoo(
   })
 }
 
+/**
+ * Obtener listas de precios desde Odoo
+ * Docs: usar search_read en product.pricelist
+ */
+export async function getPriceListsFromOdoo(): Promise<Array<{
+  id: number
+  name: string
+  currency_id: [number, string]
+  active: boolean
+}>> {
+  const uid = await authenticateOdoo()
+
+  return new Promise((resolve, reject) => {
+    objectClient.methodCall(
+      'execute_kw',
+      [
+        ODOO_DB,
+        uid,
+        ODOO_API_KEY,
+        'product.pricelist',
+        'search_read',
+        [[['active', '=', true]]], // Only active pricelists
+        {
+          fields: ['id', 'name', 'currency_id', 'active'],
+          limit: 100
+        }
+      ],
+      (error: any, result: any) => {
+        if (error) {
+          console.error('[Odoo Get PriceLists Error]', error)
+          reject(error)
+          return
+        }
+        console.log(`[Odoo] Retrieved ${result.length} pricelists`)
+        resolve(result)
+      }
+    )
+  })
+}
+
+/**
+ * Obtener vendedores/usuarios desde Odoo
+ * Docs: usar search_read en res.users con filtro por grupos
+ */
+export async function getSalesUsersFromOdoo(): Promise<Array<{
+  id: number
+  name: string
+  login: string
+  email: string | false
+  active: boolean
+}>> {
+  const uid = await authenticateOdoo()
+
+  return new Promise((resolve, reject) => {
+    objectClient.methodCall(
+      'execute_kw',
+      [
+        ODOO_DB,
+        uid,
+        ODOO_API_KEY,
+        'res.users',
+        'search_read',
+        [[['active', '=', true], ['share', '=', false]]], // Internal users only
+        {
+          fields: ['id', 'name', 'login', 'email', 'active'],
+          limit: 100
+        }
+      ],
+      (error: any, result: any) => {
+        if (error) {
+          console.error('[Odoo Get Sales Users Error]', error)
+          reject(error)
+          return
+        }
+        console.log(`[Odoo] Retrieved ${result.length} users`)
+        resolve(result)
+      }
+    )
+  })
+}
+
+/**
+ * Eliminar/Archivar lista de precios en Odoo
+ * Docs: usar write para archivar (active=false) en lugar de unlink para mantener historial
+ */
+export async function archivePriceListInOdoo(pricelistId: number): Promise<void> {
+  const uid = await authenticateOdoo()
+
+  return new Promise((resolve, reject) => {
+    objectClient.methodCall(
+      'execute_kw',
+      [
+        ODOO_DB,
+        uid,
+        ODOO_API_KEY,
+        'product.pricelist',
+        'write',
+        [[pricelistId], { active: false }]
+      ],
+      (error: any, result: any) => {
+        if (error) {
+          console.error('[Odoo Archive PriceList Error]', error)
+          reject(error)
+          return
+        }
+        console.log(`[Odoo] PriceList ${pricelistId} archived successfully`)
+        resolve()
+      }
+    )
+  })
+}
+
 // =====================================================
 // PARTNER MANAGEMENT
 // =====================================================
