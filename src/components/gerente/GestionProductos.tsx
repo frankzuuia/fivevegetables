@@ -28,7 +28,7 @@ export function GestionProductos() {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editPrice, setEditPrice] = useState<string>('')
-  const [editUom, setEditUom] = useState<string>('')
+  const [editUomId, setEditUomId] = useState<number | undefined>(undefined) // Store Odoo UoM ID
 
   const queryClient = useQueryClient()
   const supabase = createClient()
@@ -47,12 +47,29 @@ export function GestionProductos() {
     },
   })
 
+  // Fetch UoMs from Odoo
+  const { data: uomsData } = useQuery({
+    queryKey: ['uoms'],
+    queryFn: async () => {
+      const response = await fetch('/api/uoms')
+      if (!response.ok) throw new Error('Error al cargar unidades')
+      return response.json()
+    },
+  })
+
+  const uoms = uomsData?.uoms || []
+
   // Update price mutation
   const updatePriceMutation = useMutation({
-    mutationFn: async ({ productId, odooProductId, newPrice }: { productId: string, odooProductId: number, newPrice: number }) => {
-      console.log('[GestionProductos] Updating price:', { productId, odooProductId, newPrice })
+    mutationFn: async ({ productId, odooProductId, newPrice, uomId }: {
+      productId: string
+      odooProductId: number
+      newPrice: number
+      uomId?: number
+    }) => {
+      console.log('[GestionProductos] Updating:', { productId, odooProductId, newPrice, uomId })
       const { updateProductPrice } = await import('@/app/actions/products')
-      return updateProductPrice({ productId, odooProductId, newPrice })
+      return updateProductPrice({ productId, odooProductId, newPrice, uomId })
     },
     onSuccess: (result) => {
       console.log('[GestionProductos] Update result:', result)
@@ -66,7 +83,7 @@ export function GestionProductos() {
     },
     onError: (error) => {
       console.error('[GestionProductos] Update error:', error)
-      toast.error('Error al actualizar precio')
+      toast.error('Error al actualizar')
     }
   })
 
@@ -79,7 +96,9 @@ export function GestionProductos() {
   const handleEditClick = (product: Product) => {
     setEditingId(product.id)
     setEditPrice(product.list_price.toString())
-    setEditUom(product.uom || 'kg')
+    // Find matching UoM ID from Odoo based on current product.uom
+    const matchingUom = uoms.find((u: any) => u.name.toLowerCase() === product.uom?.toLowerCase())
+    setEditUomId(matchingUom?.id)
   }
 
   const handleSavePrice = (product: Product) => {
@@ -92,7 +111,8 @@ export function GestionProductos() {
     updatePriceMutation.mutate({
       productId: product.id,
       odooProductId: product.odoo_product_id,
-      newPrice
+      newPrice,
+      uomId: editUomId // Send UoM ID if changed
     })
   }
 
@@ -177,13 +197,15 @@ export function GestionProductos() {
                         autoFocus
                       />
                       <select
-                        value={editUom}
-                        onChange={(e) => setEditUom(e.target.value)}
+                        value={editUomId || ''}
+                        onChange={(e) => setEditUomId(Number(e.target.value))}
                         className="rounded border border-morph-gray-300 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-morph-primary-500"
                       >
-                        <option value="kg">kg</option>
-                        <option value="g">g</option>
-                        <option value="Unidades">Unid</option>
+                        {uoms.map((uom: any) => (
+                          <option key={uom.id} value={uom.id}>
+                            {uom.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div className="flex gap-1">
