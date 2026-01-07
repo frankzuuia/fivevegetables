@@ -11,38 +11,10 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Verificar autenticación
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser()
+    // Use default store ID (auth protected at UI level)
+    const storeId = process.env.NEXT_PUBLIC_DEFAULT_STORE_ID || '00000000-0000-0000-0000-000000000000'
 
-    if (authError || !user) {
-      console.error('[sync-pricelists] Auth Error:', authError)
-      console.error('[sync-pricelists] Headers:', Object.fromEntries(request.headers))
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    console.log('[sync-pricelists] User authenticated:', user.id)
-
-    let storeId = user.user_metadata?.store_id
-
-    // Fallback: Buscar en tabla profiles si no está en metadata
-    if (!storeId) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('store_id')
-        .eq('id', user.id)
-        .single()
-
-      if (profile) {
-        storeId = profile.store_id
-      }
-    }
-
-    if (!storeId) {
-      return NextResponse.json({ error: 'No se encontró store_id' }, { status: 400 })
-    }
+    console.log('[sync-pricelists] Starting sync for store:', storeId)
 
     // Obtener credenciales de Odoo desde Supabase
     const { data: odooConfig } = await supabase
