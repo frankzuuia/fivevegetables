@@ -83,33 +83,8 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    let storeId = user.user_metadata?.store_id
-
-    // Fallback: Buscar en tabla profiles si no está en metadata
-    if (!storeId) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('store_id')
-        .eq('id', user.id)
-        .single()
-
-      if (profile) {
-        storeId = profile.store_id
-      }
-    }
-
-    if (!storeId) {
-      return NextResponse.json({ error: 'No se encontró store_id' }, { status: 400 })
-    }
+    // Use default store
+    const storeId = process.env.NEXT_PUBLIC_DEFAULT_STORE_ID || '00000000-0000-0000-0000-000000000000'
 
     const { data: pricelists, error } = await supabase
       .from('price_lists')

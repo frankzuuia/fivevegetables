@@ -55,9 +55,11 @@ export async function GET(request: NextRequest) {
 
     if (productsError) {
       console.error('[Products List Error]', productsError)
+      console.error('[Products List] storeId:', storeId)
+      console.error('[Products List] Query params:', validated)
       return NextResponse.json(
-        { error: 'Error al obtener productos' },
-        { status: 500 }
+        { error: 'Error al obtener productos', details: productsError.message },
+        { status: 400 }
       )
     }
 
