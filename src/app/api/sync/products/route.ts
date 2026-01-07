@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
           list_price: product.list_price || 0,
           stock_level: product.qty_available || 0,
           category: Array.isArray(product.categ_id) ? product.categ_id[1] : 'General',
-          uom: 'kg', // Puedes adaptar esto según tu lógica
+          uom: Array.isArray(product.uom_id) ? product.uom_id[1] : 'kg',
           active: true,
           last_sync: new Date().toISOString(),
         }

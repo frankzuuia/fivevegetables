@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
             list_price: product.list_price || 0,
             stock_level: product.qty_available || 0,
             category: product.categ_id?.[1] || null,
-            uom: 'kg',
+            uom: Array.isArray(product.uom_id) ? product.uom_id[1] : 'kg',
             active: true,
             last_sync: new Date().toISOString(),
             // store_id se debe setear manualmente o con default
