@@ -586,7 +586,8 @@ export async function deletePriceListInOdoo(pricelistId: number): Promise<void> 
 
 /**
  * Actualizar items/reglas de precio en Odoo
- * En Odoo, los items se gestionan mediante el campo item_ids en product.pricelist
+ * En Oddo, los items se gestionan mediante el campo item_ids en product.pricelist
+ * Docs: applied_on values: '3_global', '2_product_category', '1_product', '0_product_variant'
  */
 export async function updatePriceListItemsInOdoo(
   pricelistId: number,
@@ -599,16 +600,24 @@ export async function updatePriceListItemsInOdoo(
 ): Promise<void> {
   const uid = await authenticateOdoo()
 
-  // Primero, eliminar todos los items existentes
-  // Luego crear los nuevos items
-  const itemCommands = items.map(item => [0, 0, {
-    applied_on: '1_product', // Aplicar a producto específico
-    product_tmpl_id: item.product_id,
-    compute_price: item.compute_price,
-    fixed_price: item.fixed_price || 0,
-    percent_price: item.percent_price || 0,
-    min_quantity: 0,
-  }])
+  // Create item commands for Odoo
+  // Command format: [0, 0, values] = create new record
+  const itemCommands = items.map(item => {
+    const itemData: any = {
+      applied_on: '1_product', // Apply to specific product template
+      product_tmpl_id: item.product_id, // Product template ID from Odoo
+      compute_price: item.compute_price,
+      min_quantity: 0,
+    }
+
+    if (item.compute_price === 'fixed') {
+      itemData.fixed_price = item.fixed_price || 0
+    } else if (item.compute_price === 'percentage') {
+      itemData.percent_price = -(item.percent_price || 0) // Negative for discount in Odoo
+    }
+
+    return [0, 0, itemData]
+  })
 
   return new Promise((resolve, reject) => {
     objectClient.methodCall(
@@ -623,8 +632,8 @@ export async function updatePriceListItemsInOdoo(
           [pricelistId],
           {
             item_ids: [
-              [5, 0, 0], // Eliminar todos los items existentes
-              ...itemCommands // Crear nuevos items
+              [5, 0, 0], // Command [5, 0, 0] = delete all existing items
+              ...itemCommands // Create new items
             ]
           }
         ],
