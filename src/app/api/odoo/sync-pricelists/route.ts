@@ -21,7 +21,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const storeId = user.user_metadata?.store_id
+    let storeId = user.user_metadata?.store_id
+
+    // Fallback: Buscar en tabla profiles si no está en metadata
+    if (!storeId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        storeId = profile.store_id
+      }
+    }
+
     if (!storeId) {
       return NextResponse.json({ error: 'No se encontró store_id' }, { status: 400 })
     }

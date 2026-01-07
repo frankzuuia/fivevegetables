@@ -6,26 +6,27 @@ import { toast } from 'sonner'
 
 export function SyncProductsButton() {
   const [loading, setLoading] = useState(false)
-  
+
   const handleSync = async () => {
     try {
       setLoading(true)
       toast.info('Sincronizando productos y listas de precios desde Odoo...')
-      
+
       // 1. Sincronizar productos
       const productsResponse = await fetch('/api/sync/products', {
         method: 'POST',
       })
-      
+
       const productsData = await productsResponse.json()
-      
+
       // 2. Sincronizar listas de precios
       const pricelistsResponse = await fetch('/api/odoo/sync-pricelists', {
         method: 'POST',
+        credentials: 'include',
       })
-      
+
       const pricelistsData = await pricelistsResponse.json()
-      
+
       // Mostrar resultados combinados
       if (productsData.success && pricelistsData.success) {
         toast.success(
@@ -49,7 +50,7 @@ export function SyncProductsButton() {
       setLoading(false)
     }
   }
-  
+
   return (
     <Button
       onClick={handleSync}

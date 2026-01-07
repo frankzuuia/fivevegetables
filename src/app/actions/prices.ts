@@ -117,7 +117,7 @@ export async function updateClientPricelist(
       console.error('[Odoo Price Update Error]', odooError)
       return {
         success: false,
-        error: 'Error al actualizar precio en Odoo: ' + 
+        error: 'Error al actualizar precio en Odoo: ' +
           (odooError instanceof Error ? odooError.message : 'Error desconocido'),
       }
     }
@@ -253,9 +253,9 @@ export async function getPersonalizedCatalog(
     // 3. CALCULAR PRECIOS PERSONALIZADOS
     const personalizedProducts: PersonalizedProduct[] = products.map((product) => {
       const discount = pricelist.discount_percentage / 100
-      const personalizedPrice = product.base_price * (1 - discount)
-      const savingsAmount = product.base_price - personalizedPrice
-      const savingsPercentage = (savingsAmount / product.base_price) * 100
+      const personalizedPrice = product.list_price * (1 - discount)
+      const savingsAmount = product.list_price - personalizedPrice
+      const savingsPercentage = (savingsAmount / product.list_price) * 100
 
       return {
         id: product.id,
@@ -263,7 +263,7 @@ export async function getPersonalizedCatalog(
         name: product.name,
         description: product.description,
         imageUrl: product.image_url,
-        basePrice: product.base_price,
+        basePrice: product.list_price,
         personalizedPrice: Number(personalizedPrice.toFixed(2)),
         savingsAmount: Number(savingsAmount.toFixed(2)),
         savingsPercentage: Number(savingsPercentage.toFixed(2)),

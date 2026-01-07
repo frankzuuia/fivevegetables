@@ -40,7 +40,7 @@ export function GestorListasPrecios() {
   const { data: products } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const response = await fetch('/api/products/catalog')
+      const response = await fetch('/api/products/list')
       if (!response.ok) throw new Error('Error al cargar productos')
       const data = await response.json()
       return data.products || []
@@ -64,18 +64,19 @@ export function GestorListasPrecios() {
       const response = await fetch('/api/price-lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           name: data.name,
           discountPercent: data.discountPercentage,
           type: data.type
         })
       })
-      
+
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || 'Error al crear lista')
       }
-      
+
       return response.json()
     },
     onSuccess: (result) => {
@@ -221,7 +222,8 @@ export function GestorListasPrecios() {
                 </select>
               </div>
 
-              <div>
+              {/* Descuento global eliminado por solicitud del usuario - se usarán reglas específicas */}
+              <div className="hidden">
                 <label className="mb-2 block text-sm font-medium text-morph-gray-700">
                   Descuento (%)
                 </label>

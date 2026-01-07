@@ -13,11 +13,11 @@ const DEFAULT_STORE_ID = process.env.NEXT_PUBLIC_DEFAULT_STORE_ID || '00000000-0
 export async function POST(request: NextRequest) {
   try {
     console.log('[Product Sync] Starting sync from Odoo to Supabase...')
-    
+
     // 1. Obtener productos de Odoo
     const odooProducts = await getProductsWithStock()
     console.log(`[Product Sync] Found ${odooProducts.length} products in Odoo`)
-    
+
     if (!odooProducts || odooProducts.length === 0) {
       return NextResponse.json({
         success: true,
@@ -25,14 +25,14 @@ export async function POST(request: NextRequest) {
         synced: 0,
       })
     }
-    
+
     // 2. Conectar a Supabase
     const supabase = await createClient()
-    
+
     // 3. Procesar cada producto
     let syncedCount = 0
     let errorCount = 0
-    
+
     for (const product of odooProducts) {
       try {
         // Mapear campos de Odoo a Supabase
@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
           name: product.name || 'Sin nombre',
           description: product.description || null,
           image_url: product.image_url || null,
-          base_price: product.list_price || 0,
+          list_price: product.list_price || 0,
           stock_quantity: product.qty_available || 0,
           category: Array.isArray(product.categ_id) ? product.categ_id[1] : 'General',
           unit_of_measure: 'kg', // Puedes adaptar esto según tu lógica
           active: true,
           last_sync: new Date().toISOString(),
         }
-        
+
         // Upsert: insertar o actualizar si ya existe
         const { error } = await supabase
           .from('products_cache')
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
             onConflict: 'odoo_product_id',
             ignoreDuplicates: false,
           })
-        
+
         if (error) {
           console.error(`[Product Sync] Error syncing product ${product.id}:`, error)
           errorCount++
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
         errorCount++
       }
     }
-    
+
     console.log(`[Product Sync] Completed. Synced: ${syncedCount}, Errors: ${errorCount}`)
-    
+
     return NextResponse.json({
       success: true,
       message: `Sincronización completada`,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       errors: errorCount,
       total: odooProducts.length,
     })
-    
+
   } catch (error) {
     console.error('[Product Sync] Fatal error:', error)
     return NextResponse.json(
@@ -102,31 +102,31 @@ export async function GET(request: NextRequest) {
     // Validar que solo gerentes puedan ejecutar manualmente
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       )
     }
-    
+
     // Verificar rol
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
-    
+
     if (profile?.role !== 'gerente' && profile?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Solo gerentes pueden ejecutar sync manual' },
         { status: 403 }
       )
     }
-    
+
     // Ejecutar sync (reutilizar lógica del POST)
     return POST(request)
-    
+
   } catch (error) {
     console.error('[Product Sync GET] Error:', error)
     return NextResponse.json(

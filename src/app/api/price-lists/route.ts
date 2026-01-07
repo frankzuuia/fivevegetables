@@ -22,11 +22,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const storeId = user.user_metadata?.store_id
-    console.log('[price-lists] User:', user.email, 'Store ID:', storeId, 'Metadata:', user.user_metadata)
-    
+    let storeId = user.user_metadata?.store_id
+
+    // Fallback: Buscar en tabla profiles si no está en metadata
     if (!storeId) {
-      return NextResponse.json({ error: 'No se encontró store_id en user_metadata' }, { status: 400 })
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        storeId = profile.store_id
+      }
+    }
+
+    console.log('[price-lists] User:', user.email, 'Store ID:', storeId)
+
+    if (!storeId) {
+      return NextResponse.json({ error: 'No se encontró store_id' }, { status: 400 })
     }
 
     // Leer datos del body
@@ -101,7 +115,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const storeId = user.user_metadata?.store_id
+    let storeId = user.user_metadata?.store_id
+
+    // Fallback: Buscar en tabla profiles si no está en metadata
+    if (!storeId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('store_id')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        storeId = profile.store_id
+      }
+    }
+
+    if (!storeId) {
+      return NextResponse.json({ error: 'No se encontró store_id' }, { status: 400 })
+    }
 
     const { data: pricelists, error } = await supabase
       .from('price_lists')

@@ -4,7 +4,7 @@ import type { UpdatePricelistInput, PriceList } from '@/types/database'
 // Mutation para actualizar pricelist de cliente (CONTROL REMOTO PRECIOS)
 export function useUpdatePricelist() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (input: UpdatePricelistInput) => {
       const res = await fetch('/api/prices/update', {
@@ -12,20 +12,20 @@ export function useUpdatePricelist() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       })
-      
+
       if (!res.ok) {
         const error = await res.json()
         throw new Error(error.message || 'Error updating pricelist')
       }
-      
+
       return res.json()
     },
     onMutate: async (variables) => {
       // Optimistic update
       await queryClient.cancelQueries({ queryKey: ['clients', variables.client_id] })
-      
+
       const previousClient = queryClient.getQueryData(['clients', variables.client_id])
-      
+
       queryClient.setQueryData(['clients', variables.client_id], (old: unknown) => {
         if (typeof old === 'object' && old !== null) {
           return {
@@ -35,7 +35,7 @@ export function useUpdatePricelist() {
         }
         return old
       })
-      
+
       return { previousClient }
     },
     onError: (error, variables, context) => {
@@ -58,7 +58,7 @@ export function usePriceLists(
   return useQuery({
     queryKey: ['priceLists', storeId] as const,
     queryFn: async (): Promise<PriceList[]> => {
-      const res = await fetch(`/api/pricelists?store_id=${storeId}`)
+      const res = await fetch(`/api/price-lists?store_id=${storeId}`)
       if (!res.ok) throw new Error('Error fetching price lists')
       return res.json()
     },

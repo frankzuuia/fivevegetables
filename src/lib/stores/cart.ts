@@ -34,11 +34,11 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       ...initialState,
-      
+
       addItem: (product, quantity) => {
         const items = get().items
         const existingItem = items.find((item) => item.product.id === product.id)
-        
+
         if (existingItem) {
           // Actualizar cantidad (máximo 99)
           set({
@@ -56,25 +56,25 @@ export const useCartStore = create<CartStore>()(
               {
                 product,
                 quantity: Math.min(quantity, 99),
-                unitPrice: product.base_price,
+                unitPrice: product.list_price,
               },
             ],
           })
         }
       },
-      
+
       removeItem: (productId) => {
         set({
           items: get().items.filter((item) => item.product.id !== productId),
         })
       },
-      
+
       updateQuantity: (productId, quantity) => {
         if (quantity <= 0) {
           get().removeItem(productId)
           return
         }
-        
+
         set({
           items: get().items.map((item) =>
             item.product.id === productId
@@ -83,20 +83,20 @@ export const useCartStore = create<CartStore>()(
           ),
         })
       },
-      
+
       clearCart: () => set({ items: [] }),
-      
+
       getTotal: () => {
         return get().items.reduce(
           (total, item) => total + item.unitPrice * item.quantity,
           0
         )
       },
-      
+
       getItemCount: () => {
         return get().items.reduce((count, item) => count + item.quantity, 0)
       },
-      
+
       setHydrated: (hydrated) => set({ isHydrated: hydrated }),
     }),
     {

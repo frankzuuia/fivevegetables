@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
             odoo_product_id: product.id,
             name: product.name || 'Sin nombre',
             description: product.description || null,
-            base_price: product.list_price || 0,
+            list_price: product.list_price || 0,
             stock_quantity: product.qty_available || 0,
             category: product.categ_id?.[1] || null,
             active: true,
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         let pricelistId: string | null = null
         if (partner.property_product_pricelist) {
           const odooPricelistId = Array.isArray(partner.property_product_pricelist)
-            ?partner.property_product_pricelist[0]
+            ? partner.property_product_pricelist[0]
             : partner.property_product_pricelist
 
           const { data: pricelist } = await supabase

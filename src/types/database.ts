@@ -204,7 +204,7 @@ export interface Database {
           name: string
           description: string | null
           image_url: string | null
-          base_price: number
+          list_price: number
           stock_quantity: number
           category: string | null
           unit_of_measure: string
@@ -220,7 +220,7 @@ export interface Database {
           name: string
           description?: string | null
           image_url?: string | null
-          base_price: number
+          list_price: number
           stock_quantity?: number
           category?: string | null
           unit_of_measure?: string
@@ -236,7 +236,7 @@ export interface Database {
           name?: string
           description?: string | null
           image_url?: string | null
-          base_price?: number
+          list_price?: number
           stock_quantity?: number
           category?: string | null
           unit_of_measure?: string

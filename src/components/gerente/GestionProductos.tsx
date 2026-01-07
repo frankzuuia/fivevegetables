@@ -18,7 +18,7 @@ interface Product {
   name: string
   display_name: string
   image_url: string
-  base_price: number
+  list_price: number
   qty_available: number // Stock from Odoo (synced)
   odoo_product_id: number
   uom_name: string
@@ -28,7 +28,7 @@ export function GestionProductos() {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editPrice, setEditPrice] = useState<string>('')
-  
+
   const queryClient = useQueryClient()
   const supabase = createClient()
 
@@ -64,14 +64,14 @@ export function GestionProductos() {
   })
 
   // Filter products
-  const filteredProducts = products?.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredProducts = products?.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const handleEditClick = (product: Product) => {
     setEditingId(product.id)
-    setEditPrice(product.base_price.toString())
+    setEditPrice(product.list_price.toString())
   }
 
   const handleSavePrice = (product: Product) => {
@@ -140,7 +140,7 @@ export function GestionProductos() {
                     <Package className="h-12 w-12" />
                   </div>
                 )}
-                
+
                 <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-medium shadow-sm backdrop-blur-sm">
                   <div className={`h-2 w-2 rounded-full ${product.qty_available > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
                   <span className="text-morph-gray-700">
@@ -185,7 +185,7 @@ export function GestionProductos() {
                     <div className="flex flex-col">
                       <span className="text-xs text-morph-gray-500">Precio Base</span>
                       <span className="text-lg font-bold text-morph-primary-600">
-                        ${product.base_price?.toFixed(2)}
+                        ${product.list_price?.toFixed(2)}
                       </span>
                     </div>
                     <Button
