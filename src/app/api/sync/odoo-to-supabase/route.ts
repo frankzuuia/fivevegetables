@@ -5,6 +5,7 @@ import {
   getPriceLists,
   getPartners,
   getOrderInvoiceStatus,
+  getSaleOrders,
 } from '@/lib/odoo/client'
 
 // =====================================================
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       productsSync: 0,
       pricelistsSync: 0,
       clientsSync: 0,
+      ordersSync: 0,
       invoicesSync: 0,
       errors: [] as string[],
       duration: 0,
@@ -161,7 +163,74 @@ export async function POST(request: NextRequest) {
       console.error('[Sync Clients Error]', error)
     }
 
-    // 5. SYNC FACTURAS (invoice_status de orders)
+    // 5. SYNC PEDIDOS (sale.order)
+    try {
+      console.log('[Sync] Obteniendo pedidos desde Odoo...')
+      const odooOrders = await getSaleOrders()
+
+      for (const order of odooOrders) {
+        // Buscar cliente en Supabase por odoo_partner_id
+        const { data: cliente } = await supabase
+          .from('clients_mirror')
+          .select('id')
+          .eq('odoo_partner_id', Array.isArray(order.partner_id) ? order.partner_id[0] : order.partner_id)
+          .single()
+
+        if (!cliente) {
+          console.warn(`[Sync] Cliente no encontrado para order ${order.id}`)
+          continue
+        }
+
+        // Mapear estado de Odoo a estado de app
+        const stateMap: Record<string, 'draft' | 'confirmed' | 'processing' | 'delivered' | 'cancelled'> = {
+          'draft': 'draft',
+          'sent': 'confirmed',
+          'sale': 'processing',
+          'done': 'delivered',
+          'cancel': 'cancelled',
+        }
+
+        const status = stateMap[order.state] || 'draft'
+
+        // Mapear invoice_status
+        const invoiceStatusMap: Record<string, 'no' | 'to_invoice' | 'invoiced'> = {
+          'no': 'no',
+          'to invoice': 'to_invoice',
+          'invoiced': 'invoiced',
+        }
+
+        const invoiceStatus = invoiceStatusMap[order.invoice_status] || 'no'
+
+        const { error } = await supabase.from('orders_shadow').upsert(
+          {
+            odoo_order_id: order.id,
+            cliente_id: cliente.id,
+            order_number: order.name || `ORD-${order.id}`,
+            status,
+            invoice_status: invoiceStatus,
+            subtotal: order.amount_total - order.amount_tax,
+            tax: order.amount_tax,
+            total: order.amount_total,
+            synced_at: new Date().toISOString(),
+          },
+          { onConflict: 'odoo_order_id' }
+        )
+
+        if (error) {
+          result.errors.push(`Pedido ${order.id}: ${error.message}`)
+        } else {
+          result.ordersSync++
+        }
+      }
+
+      console.log(`[Sync] ${result.ordersSync} pedidos sincronizados`)
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido'
+      result.errors.push(`Pedidos: ${errorMsg}`)
+      console.error('[Sync Orders Error]', error)
+    }
+
+    // 6. SYNC FACTURAS (invoice_status de orders)
     try {
       console.log('[Sync] Actualizando estado de facturas...')
 

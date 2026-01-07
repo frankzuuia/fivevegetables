@@ -181,6 +181,41 @@ export async function getPartners() {
 }
 
 /**
+ * Obtener pedidos de venta (sale.order) desde Odoo
+ */
+export async function getSaleOrders() {
+  try {
+    const orders = await executeKw<any[]>(
+      'sale.order',
+      'search_read',
+      [
+        [], // Sin filtro: traer todos
+      ],
+      {
+        fields: [
+          'id',
+          'name',
+          'partner_id',
+          'date_order',
+          'state',
+          'amount_total',
+          'amount_tax',
+          'invoice_status',
+          'order_line',
+        ],
+        limit: 500,
+        order: 'date_order desc',
+      }
+    )
+
+    return orders
+  } catch (error) {
+    console.error('[Odoo] Error getting sale orders', error)
+    throw error
+  }
+}
+
+/**
  * Crear pedido en Odoo (sale.order)
  */
 export async function createSaleOrder(orderData: {
