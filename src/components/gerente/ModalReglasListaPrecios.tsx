@@ -156,7 +156,7 @@ export function ModalReglasListaPrecios({
                   <option value="">Todos los productos</option>
                   {products.map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.name}
+                      {product.name} - ${product.price.toFixed(2)} / {product.unit}
                     </option>
                   ))}
                 </select>
@@ -233,14 +233,17 @@ export function ModalReglasListaPrecios({
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
-                <Button onClick={handleAddRule} variant="primary">
-                  Guardar y cerrar
-                </Button>
                 <Button
                   onClick={() => {
                     handleAddRule()
-                    // Mantener el modal abierto para agregar más
+                    setIsCreatingRule(false) // Close form after save
                   }}
+                  variant="primary"
+                >
+                  Guardar y cerrar
+                </Button>
+                <Button
+                  onClick={handleAddRule}
                   variant="outline"
                 >
                   Guardar y crear nuevo
@@ -266,7 +269,7 @@ export function ModalReglasListaPrecios({
                     Precio
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-morph-gray-600 uppercase w-24">
-                    
+
                   </th>
                 </tr>
               </thead>
@@ -284,7 +287,7 @@ export function ModalReglasListaPrecios({
                         {rule.product_name || 'Todos los productos'}
                       </td>
                       <td className="px-6 py-4 text-sm text-morph-gray-900">
-                        {rule.compute_price === 'fixed' 
+                        {rule.compute_price === 'fixed'
                           ? `$ ${rule.fixed_price?.toFixed(2)}`
                           : `${rule.percent_price}%`
                         }
@@ -311,8 +314,8 @@ export function ModalReglasListaPrecios({
           <Button onClick={onClose} variant="outline">
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             variant="primary"
             disabled={saving}
           >
