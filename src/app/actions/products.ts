@@ -275,33 +275,64 @@ export async function updatePriceList(input: z.infer<typeof UpdatePriceListSchem
           name: validated.name,
         })
         console.log('[updatePriceList] Odoo updated successfully')
+
+        // Read back from Odoo to ensure sync
+        const { objectClient, authenticateOdoo, ODOO_DB, ODOO_API_KEY } = await import('@/lib/odoo/client')
+        const uid = await authenticateOdoo()
+
+        const odooData: any = await new Promise((resolve, reject) => {
+          objectClient.methodCall(
+            'execute_kw',
+            [
+              ODOO_DB,
+              uid,
+              ODOO_API_KEY,
+              'product.pricelist',
+              'read',
+              [[priceList.odoo_pricelist_id]],
+              { fields: ['name', 'active'] }
+            ],
+            (error: any, result: any) => {
+              if (error) reject(error)
+              else resolve(result[0])
+            }
+          )
+        })
+
+        // Update Supabase with Odoo data to ensure sync
+        await supabase
+          .from('price_lists')
+          .update({
+            name: odooData.name,
+            active: odooData.active,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', validated.priceListId)
+
+        console.log('[updatePriceList] Synced back from Odoo:', odooData.name)
+
       } catch (odooError) {
         console.error('[Odoo Update Pricelist Error]', odooError)
         return { success: false, error: 'Error al actualizar en Odoo' }
       }
-    }
-
-    // Actualizar en Supabase
-    const { error: updateError } = await supabase
-      .from('price_lists')
-      .update({
-        name: validated.name,
-        type: validated.type,
-        discount_percentage: validated.discountPercentage,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', validated.priceListId)
-
-    if (updateError) {
-      console.error('[Supabase Update Error]', updateError)
-      return { success: false, error: 'Error al actualizar en Supabase' }
+    } else {
+      // Si no tiene odoo_pricelist_id, solo actualizar en Supabase
+      await supabase
+        .from('price_lists')
+        .update({
+          name: validated.name,
+          type: validated.type,
+          discount_percentage: validated.discountPercentage,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', validated.priceListId)
     }
 
     revalidatePath('/dashboard/gerente')
 
     return {
       success: true,
-      message: 'Lista de precios actualizada exitosamente',
+      message: 'Lista de precios actualizada y sincronizada',
     }
 
   } catch (error) {
