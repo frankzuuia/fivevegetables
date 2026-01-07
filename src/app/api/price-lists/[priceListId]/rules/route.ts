@@ -12,30 +12,7 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
     const { rules } = await request.json()
-
-    // Verificar que la pricelist pertenece al store del usuario
-    const storeId = user.user_metadata?.store_id
-    const { data: priceList } = await supabase
-      .from('price_lists')
-      .select('id')
-      .eq('id', params.priceListId)
-      .eq('store_id', storeId)
-      .single()
-
-    if (!priceList) {
-      return NextResponse.json({ error: 'Lista de precios no encontrada' }, { status: 404 })
-    }
 
     // Eliminar reglas existentes
     await supabase
@@ -78,15 +55,6 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
 
     const { data: items, error } = await supabase
       .from('price_list_items')
