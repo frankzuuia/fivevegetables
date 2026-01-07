@@ -461,3 +461,91 @@ export async function assignPriceListToClient(input: z.infer<typeof AssignPriceL
     return { success: false, error: 'Error al asignar lista de precios' }
   }
 }
+
+/**
+ * Sincronizar listas de precios desde Odoo a Supabase
+ * Lee todas las listas activas en Odoo y actualiza/crea en Supabase
+ */
+export async function syncPriceListsFromOdoo() {
+  try {
+    const supabase = await createClient()
+
+    // Verificar que sea gerente
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'No autenticado' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, store_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'gerente') {
+      return { success: false, error: 'Solo gerentes pueden sincronizar' }
+    }
+
+    console.log('[syncPriceListsFromOdoo] Starting sync...')
+
+    // Get all active pricelists from Odoo
+    const { getAllPriceListsFromOdoo } = await import('@/lib/odoo/client')
+    const odooPricelists = await getAllPriceListsFromOdoo()
+
+    console.log(`[syncPriceListsFromOdoo] Found ${odooPricelists.length} pricelists in Odoo`)
+
+    let updated = 0
+    let created = 0
+
+    for (const odooPricelist of odooPricelists) {
+      // Check if exists in Supabase
+      const { data: existing } = await supabase
+        .from('price_lists')
+        .select('id, name')
+        .eq('odoo_pricelist_id', odooPricelist.id)
+        .eq('store_id', profile.store_id)
+        .single()
+
+      if (existing) {
+        // Update existing
+        await supabase
+          .from('price_lists')
+          .update({
+            name: odooPricelist.name,
+            active: odooPricelist.active,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id)
+
+        console.log(`[syncPriceListsFromOdoo] Updated: ${odooPricelist.name}`)
+        updated++
+      } else {
+        // Create new
+        await supabase
+          .from('price_lists')
+          .insert({
+            odoo_pricelist_id: odooPricelist.id,
+            name: odooPricelist.name,
+            store_id: profile.store_id,
+            type: 'especial', // Default type
+            discount_percentage: 0,
+            active: odooPricelist.active,
+          })
+
+        console.log(`[syncPriceListsFromOdoo] Created: ${odooPricelist.name}`)
+        created++
+      }
+    }
+
+    revalidatePath('/dashboard/gerente')
+
+    return {
+      success: true,
+      message: `Sincronizadas ${updated} listas actualizadas y ${created} nuevas desde Odoo`,
+      updated,
+      created,
+    }
+
+  } catch (error) {
+    console.error('[syncPriceListsFromOdoo Error]', error)
+    return { success: false, error: 'Error al sincronizar listas desde Odoo' }
+  }
+}

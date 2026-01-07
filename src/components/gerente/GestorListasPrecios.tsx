@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Plus, Edit2, Trash2, Tag, DollarSign, List } from 'lucide-react'
+import { Plus, Edit2, Trash2, Tag, DollarSign, List, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ModalReglasListaPrecios } from './ModalReglasListaPrecios'
 
