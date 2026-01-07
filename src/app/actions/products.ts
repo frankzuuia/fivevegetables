@@ -45,19 +45,7 @@ export async function updateProductPrice(input: z.infer<typeof UpdateProductPric
     const validated = UpdateProductPriceSchema.parse(input)
     const supabase = await createClient()
 
-    // Verificar que sea gerente
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: 'No autenticado' }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'gerente') {
-      return { success: false, error: 'Solo gerentes pueden actualizar precios' }
-    }
+    console.log('[updateProductPrice] Starting update:', validated)
 
     // Actualizar en Odoo
     try {
@@ -65,6 +53,7 @@ export async function updateProductPrice(input: z.infer<typeof UpdateProductPric
       await updateProductInOdoo(validated.odooProductId, {
         list_price: validated.newPrice,
       })
+      console.log('[updateProductPrice] Odoo updated successfully')
     } catch (odooError) {
       console.error('[Odoo Update Error]', odooError)
       return { success: false, error: 'Error al actualizar en Odoo' }
