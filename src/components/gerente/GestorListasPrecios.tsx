@@ -371,6 +371,7 @@ export function GestorListasPrecios() {
           priceListId={selectedListForRules.id}
           priceListName={selectedListForRules.name}
           products={products || []}
+          existingRules={[]} // TODO: Fetch from API
           onSave={async (rules) => {
             const response = await fetch(`/api/price-lists/${selectedListForRules.id}/rules`, {
               method: 'POST',
@@ -378,6 +379,10 @@ export function GestorListasPrecios() {
               body: JSON.stringify({ rules })
             })
             if (!response.ok) throw new Error('Error al guardar reglas')
+
+            // Reload modal to show saved rules
+            setRulesModalOpen(false)
+            setTimeout(() => setRulesModalOpen(true), 100)
           }}
         />
       )}

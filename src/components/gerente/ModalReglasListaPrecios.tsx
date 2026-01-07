@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Plus, X } from 'lucide-react'
@@ -52,6 +52,23 @@ export function ModalReglasListaPrecios({
     compute_price: 'fixed',
   })
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  // Load existing rules when modal opens
+  useEffect(() => {
+    if (isOpen && priceListId) {
+      setLoading(true)
+      fetch(`/api/price-lists/${priceListId}/rules`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.rules) {
+            setRules(data.rules)
+          }
+        })
+        .catch(err => console.error('[ModalReglas] Error loading rules:', err))
+        .finally(() => setLoading(false))
+    }
+  }, [isOpen, priceListId])
 
   const handleAddRule = () => {
     if (!newRule.product_id) {
