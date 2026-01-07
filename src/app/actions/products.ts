@@ -270,34 +270,16 @@ export async function updatePriceList(input: z.infer<typeof UpdatePriceListSchem
     // Actualizar en Odoo si tiene odoo_pricelist_id
     if (priceList.odoo_pricelist_id) {
       try {
-        const { updatePriceListInOdoo } = await import('@/lib/odoo/client')
+        const { updatePriceListInOdoo, readPriceListFromOdoo } = await import('@/lib/odoo/client')
+
+        // Update in Odoo
         await updatePriceListInOdoo(priceList.odoo_pricelist_id, {
           name: validated.name,
         })
         console.log('[updatePriceList] Odoo updated successfully')
 
         // Read back from Odoo to ensure sync
-        const { readPriceListFromOdoo } = await import('@/lib/odoo/client')
         const odooData = await readPriceListFromOdoo(priceList.odoo_pricelist_id)
-
-        const odooData: any = await new Promise((resolve, reject) => {
-          objectClient.methodCall(
-            'execute_kw',
-            [
-              ODOO_DB,
-              uid,
-              ODOO_API_KEY,
-              'product.pricelist',
-              'read',
-              [[priceList.odoo_pricelist_id]],
-              { fields: ['name', 'active'] }
-            ],
-            (error: any, result: any) => {
-              if (error) reject(error)
-              else resolve(result[0])
-            }
-          )
-        })
 
         // Update Supabase with Odoo data to ensure sync
         await supabase
