@@ -21,7 +21,7 @@ interface Product {
   list_price: number
   qty_available: number // Stock from Odoo (synced)
   odoo_product_id: number
-  uom_name: string
+  uom: string
 }
 
 export function GestionProductos() {
@@ -73,7 +73,7 @@ export function GestionProductos() {
   const handleEditClick = (product: Product) => {
     setEditingId(product.id)
     setEditPrice(product.list_price.toString())
-    setEditUom(product.uom_name || 'kg')
+    setEditUom(product.uom || 'kg')
   }
 
   const handleSavePrice = (product: Product) => {
@@ -146,7 +146,7 @@ export function GestionProductos() {
                 <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-medium shadow-sm backdrop-blur-sm">
                   <div className={`h-2 w-2 rounded-full ${product.qty_available > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
                   <span className="text-morph-gray-700">
-                    {product.qty_available} {product.uom_name || 'unid'}
+                    {product.qty_available} {product.uom || 'unid'}
                   </span>
                 </div>
               </div>
@@ -206,7 +206,7 @@ export function GestionProductos() {
                           ${product.list_price?.toFixed(2)}
                         </span>
                         <span className="text-xs text-morph-gray-500">
-                          / {product.uom_name || 'kg'}
+                          / {product.uom || 'kg'}
                         </span>
                       </div>
                     </div>
