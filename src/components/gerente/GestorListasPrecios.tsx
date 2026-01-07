@@ -122,10 +122,14 @@ export function GestorListasPrecios() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (priceListId: string) => {
+      console.log('[deleteMutation] Starting delete for:', priceListId)
       const { deletePriceList } = await import('@/app/actions/products')
-      return deletePriceList({ priceListId })
+      const result = await deletePriceList({ priceListId })
+      console.log('[deleteMutation] Result:', result)
+      return result
     },
     onSuccess: (result) => {
+      console.log('[deleteMutation] onSuccess:', result)
       if (result.success) {
         toast.success(result.message)
         queryClient.invalidateQueries({ queryKey: ['price-lists'] })
@@ -133,6 +137,10 @@ export function GestorListasPrecios() {
         toast.error(result.error)
       }
     },
+    onError: (error: any) => {
+      console.error('[deleteMutation] onError:', error)
+      toast.error(error.message || 'Error al eliminar lista')
+    }
   })
 
   const resetForm = () => {
