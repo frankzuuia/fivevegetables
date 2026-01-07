@@ -263,12 +263,14 @@ export async function deletePriceList(input: z.infer<typeof DeletePriceListSchem
     }
 
     // Archivar en Odoo (no eliminar permanentemente)
-    try {
-      const { deletePriceListInOdoo } = await import('@/lib/odoo/client')
-      await deletePriceListInOdoo(priceList.odoo_pricelist_id)
-    } catch (odooError) {
-      console.error('[Odoo Delete Pricelist Error]', odooError)
-      return { success: false, error: 'Error al archivar en Odoo' }
+    if (priceList.odoo_pricelist_id) {
+      try {
+        const { archivePriceListInOdoo } = await import('@/lib/odoo/client')
+        await archivePriceListInOdoo(priceList.odoo_pricelist_id)
+      } catch (odooError) {
+        console.error('[Odoo Archive Pricelist Error]', odooError)
+        // Continue even if Odoo fails
+      }
     }
 
     // Eliminar en Supabase

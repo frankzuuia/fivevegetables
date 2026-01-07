@@ -100,3 +100,49 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
+
+// Eliminar/Archivar lista de precios
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { searchParams } = new URL(request.url)
+    const priceListId = searchParams.get('id')
+
+    if (!priceListId) {
+      return NextResponse.json({ error: 'ID de lista requerido' }, { status: 400 })
+    }
+
+    // Get price list with odoo_pricelist_id
+    const { data: priceList } = await supabase
+      .from('price_lists')
+      .select('odoo_pricelist_id')
+      .eq('id', priceListId)
+      .single()
+
+    // Archive in Odoo first if it has odoo_pricelist_id
+    if (priceList?.odoo_pricelist_id) {
+      try {
+        const { archivePriceListInOdoo } = await import('@/lib/odoo/client')
+        await archivePriceListInOdoo(priceList.odoo_pricelist_id)
+        console.log(`[price-lists] Archived in Odoo: ${priceList.odoo_pricelist_id}`)
+      } catch (odooError) {
+        console.error('[price-lists] Error archiving in Odoo:', odooError)
+        // Continue to delete in Supabase even if Odoo fails
+      }
+    }
+
+    // Delete from Supabase (or archive if you prefer)
+    const { error } = await supabase
+      .from('price_lists')
+      .delete()
+      .eq('id', priceListId)
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, message: 'Lista eliminada correctamente' })
+  } catch (error: any) {
+    console.error('[price-lists DELETE] Error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
