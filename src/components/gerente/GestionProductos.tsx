@@ -220,7 +220,6 @@ export function GestionProductos() {
                     </Button>
                   </div>
                 )}
-                )}
               </div>
             </div>
           ))}
