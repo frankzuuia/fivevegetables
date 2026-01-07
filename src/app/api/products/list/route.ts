@@ -16,9 +16,7 @@ const QuerySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. AUTENTICACIÓN (opcional para catálogo público, requerido para precios personalizados)
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     // 2. VALIDAR QUERY PARAMS
     const searchParams = request.nextUrl.searchParams
@@ -29,9 +27,13 @@ export async function GET(request: NextRequest) {
       active_only: searchParams.get('active_only') || 'true',
     })
 
+    // Use default store for now (can be made dynamic later)
+    const storeId = process.env.NEXT_PUBLIC_DEFAULT_STORE_ID || '00000000-0000-0000-0000-000000000000'
+
     let query = supabase
       .from('products_cache')
       .select('*')
+      .eq('store_id', storeId)
       .order('name')
 
     // Filtro por categoría

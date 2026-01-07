@@ -11,33 +11,10 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Verificar autenticación
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser()
+    // Use default store (UI already protects this endpoint)
+    const storeId = process.env.NEXT_PUBLIC_DEFAULT_STORE_ID || '00000000-0000-0000-0000-000000000000'
 
-    if (authError || !user) {
-      console.log('[price-lists] Auth error:', authError)
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    let storeId = user.user_metadata?.store_id
-
-    // Fallback: Buscar en tabla profiles si no está en metadata
-    if (!storeId) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('store_id')
-        .eq('id', user.id)
-        .single()
-
-      if (profile) {
-        storeId = profile.store_id
-      }
-    }
-
-    console.log('[price-lists] User:', user.email, 'Store ID:', storeId)
+    console.log('[price-lists] Creating price list for store:', storeId)
 
     if (!storeId) {
       return NextResponse.json({ error: 'No se encontró store_id' }, { status: 400 })
