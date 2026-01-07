@@ -12,7 +12,7 @@
 export async function loginWithPIN(pin: string) {
   try {
     // Llamar al API endpoint
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/auth/pin`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/pin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

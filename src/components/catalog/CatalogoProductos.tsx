@@ -7,18 +7,30 @@
 
 import { useState } from 'react'
 import { useProductsCatalog } from '@/lib/hooks/useProducts'
+import { usePriceListPrices } from '@/lib/hooks/usePriceListPrices'
 import { useCartStore } from '@/lib/stores/cartStore'
 import { Button } from '@/components/ui/Button'
-import { ShoppingCart, Plus, Minus, Search } from 'lucide-react'
+import { ShoppingCart, Plus, Minus, Search, Tag } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
-export function CatalogoProductos() {
+interface CatalogoProductosProps {
+  clienteId?: string | null
+  clienteName?: string
+}
+
+export function CatalogoProductos({ clienteId, clienteName }: CatalogoProductosProps = {}) {
   const [searchTerm, setSearchTerm] = useState('')
-  const { data: productos, isLoading, error } = useProductsCatalog()
+  const { data: productos = [], isLoading, error } = useProductsCatalog()
   const { items, addItem, updateQuantity, getTotalItems } = useCartStore()
   
-  const productosFiltrados = productos?.filter((p: any) =>
+  // Aplicar precios personalizados si hay clienteId
+  const { products: productosConPrecios, hasPriceList } = usePriceListPrices(
+    clienteId || null,
+    productos
+  )
+  
+  const productosFiltrados = productosConPrecios?.filter((p: any) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
   
@@ -32,7 +44,7 @@ export function CatalogoProductos() {
       productId: producto.id,
       odooProductId: producto.odoo_product_id,
       name: producto.name,
-      price: producto.price,
+      price: producto.final_price || producto.price, // Usar precio final si existe
       quantity: 1,
       imageUrl: producto.image_url,
     })
@@ -76,8 +88,14 @@ export function CatalogoProductos() {
             Catálogo de Productos
           </h1>
           <p className="mt-2 text-morph-gray-600">
-            Precios especiales para tu negocio
+            {clienteName ? `Precios para ${clienteName}` : 'Precios especiales para tu negocio'}
           </p>
+          {hasPriceList && (
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700">
+              <Tag className="h-4 w-4" />
+              Lista de precios personalizada activa
+            </div>
+          )}
         </div>
         
         {/* Carrito Badge */}
@@ -152,13 +170,32 @@ export function CatalogoProductos() {
                     </p>
                   )}
                   
-                  <div className="mt-3 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-morph-primary-700">
-                      ${producto.price.toFixed(2)}
-                    </span>
-                    <span className="text-sm text-morph-gray-500">
-                      / {producto.unit}
-                    </span>
+                  <div className="mt-3">
+                    {producto.has_special_price ? (
+                      <div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-purple-700">
+                            ${producto.final_price.toFixed(2)}
+                          </span>
+                          <span className="text-sm text-gray-500 line-through">
+                            ${producto.original_price.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="mt-1 inline-flex items-center gap-1 rounded-full  bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                          <Tag className="h-3 w-3" />
+                          Precio especial
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-morph-primary-700">
+                          ${(producto.final_price || producto.price).toFixed(2)}
+                        </span>
+                        <span className="text-sm text-morph-gray-500">
+                          / {producto.unit}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   <p className="mt-1 text-xs text-morph-gray-500">

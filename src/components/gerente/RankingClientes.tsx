@@ -19,9 +19,10 @@ interface RankingClientesProps {
   data: Cliente[]
   isLoading?: boolean
   onClienteClick?: (clienteId: string, clienteName: string) => void
+  onViewAll?: () => void
 }
 
-export function RankingClientes({ data, isLoading, onClienteClick }: RankingClientesProps) {
+export function RankingClientes({ data, isLoading, onClienteClick, onViewAll }: RankingClientesProps) {
   if (isLoading) {
     return (
       <div className="rounded-lg border border-morph-gray-200 bg-white p-6 shadow-sm">
@@ -37,15 +38,18 @@ export function RankingClientes({ data, isLoading, onClienteClick }: RankingClie
   
   return (
     <div className="overflow-hidden rounded-lg border border-morph-gray-200 bg-white shadow-sm">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-morph-primary-50 to-morph-primary-100 p-6">
+      {/* Header - CLICKABLE */}
+      <div 
+        onClick={onViewAll}
+        className={`bg-gradient-to-r from-morph-primary-50 to-morph-primary-100 p-6 ${onViewAll ? 'cursor-pointer hover:from-morph-primary-100 hover:to-morph-primary-200 transition-all' : ''}`}
+      >
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-morph-gray-900">
               🏆 Top 5 Clientes
             </h2>
             <p className="mt-1 text-sm text-morph-gray-600">
-              Clientes con mayores compras
+              Clientes con mayores compras {onViewAll && '• Click para ver todos'}
             </p>
           </div>
           <div className="rounded-full bg-morph-primary-200 px-4 py-2">

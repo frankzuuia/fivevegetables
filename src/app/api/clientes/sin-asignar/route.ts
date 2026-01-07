@@ -9,41 +9,14 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET() {
   try {
     const supabase = await createClient()
-    
-    // 1. AUTH
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      console.error('[API Sin Asignar] Auth error:', authError)
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
-    }
-    
-    // 2. ROLE CHECK (solo gerente)
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, store_id')
-      .eq('id', user.id)
-      .single()
-    
-    if (!profile || profile.role !== 'gerente') {
-      return NextResponse.json(
-        { error: 'Solo gerentes pueden ver clientes sin asignar' },
-        { status: 403 }
-      )
-    }
-    
-    // 3. FETCH CLIENTES SIN VENDEDOR (null o string vacío)
+
+    // 3. FETCH CLIENTES SIN VENDEDOR (verificando join con profiles)
     const { data: clientes, error: fetchError } = await supabase
       .from('clients_mirror')
-      .select('*')
-      .eq('store_id', profile.store_id)
-      .or('vendedor_id.is.null,vendedor_id.eq.')
+      .select(`
+        *,
+        vendedor:profiles!vendedor_id(full_name)
+      `)
       .order('created_at', { ascending: false })
     
     if (fetchError) {
@@ -54,7 +27,21 @@ export async function GET() {
       )
     }
     
-    return NextResponse.json(clientes || [])
+    // Filter clients where vendedor is null (either no vendedor_id or join failed)
+    
+    const clientesSinAsignar = clientes?.filter((cliente: any) => {
+        // Un cliente está sin asignar si:
+        // 1. No tiene objeto 'vendedor'
+        // 2. Tiene objeto pero full_name está vacío
+        // 3. vendedor_id es null (explicito)
+        if (!cliente.vendedor) return true
+        if (Array.isArray(cliente.vendedor) && cliente.vendedor.length === 0) return true
+        if (typeof cliente.vendedor === 'object' && !cliente.vendedor.full_name) return true
+        
+        return false
+    }) || []
+    
+    return NextResponse.json(clientesSinAsignar)
     
   } catch (error) {
     console.error('[API Clientes Sin Asignar Error]', error)

@@ -581,3 +581,33 @@ export async function updatePartnerInOdoo(partnerId: number, values: Record<stri
     )
   })
 }
+
+/**
+ * Eliminar partner en Odoo (archivar)
+ */
+export async function deletePartnerInOdoo(partnerId: number): Promise<void> {
+  const uid = await authenticateOdoo()
+  
+  return new Promise((resolve, reject) => {
+    objectClient.methodCall(
+      'execute_kw',
+      [
+        ODOO_DB,
+        uid,
+        ODOO_API_KEY,
+        'res.partner',
+        'write',
+        [[partnerId], { active: false }],
+      ],
+      (error: any, result: any) => {
+        if (error) {
+          console.error('[Odoo Delete Partner Error]', error)
+          reject(error)
+          return
+        }
+        console.log(`[Odoo] Partner ${partnerId} archived successfully`)
+        resolve()
+      }
+    )
+  })
+}

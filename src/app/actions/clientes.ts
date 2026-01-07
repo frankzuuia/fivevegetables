@@ -283,3 +283,174 @@ export async function crearClienteVendedor(
     return { success: false, error: error instanceof Error ? error.message : 'Error' }
   }
 }
+
+// =====================================================
+// Eliminar Cliente (Solo Gerente)
+// Elimina de Supabase y archiva en Odoo
+// =====================================================
+
+export async function deleteCliente(clienteId: string) {
+  try {
+    const supabase = await createClient()
+
+    // 1. AUTH & ROLE CHECK
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return { success: false, error: 'No autorizado' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'gerente') {
+      return { success: false, error: 'Solo gerentes pueden eliminar clientes' }
+    }
+
+    // 2. OBTENER CLIENTE PARA ODOO ID
+    const { data: cliente, error: fetchError } = await supabase
+      .from('clients_mirror')
+      .select('odoo_partner_id')
+      .eq('id', clienteId)
+      .single()
+
+    if (fetchError || !cliente) {
+      return { success: false, error: 'Cliente no encontrado' }
+    }
+
+    // 3. ELIMINAR DE SUPABASE (Cascada debería borrar relaciones)
+    const { error: deleteError } = await supabase
+      .from('clients_mirror')
+      .delete()
+      .eq('id', clienteId)
+
+    if (deleteError) {
+      console.error('[Delete Cliente DB Error]', deleteError)
+      return { success: false, error: deleteError.message }
+    }
+
+    // 4. ELIMINAR DE ODOO (Archivar)
+    if (cliente.odoo_partner_id) {
+      try {
+        const { deletePartnerInOdoo } = await import('@/lib/odoo/client')
+        await deletePartnerInOdoo(cliente.odoo_partner_id)
+        console.log(`[Sync] Cliente ${clienteId} archivado en Odoo`)
+      } catch (odooError) {
+        console.error('[Delete Cliente Odoo Error]', odooError)
+        // No fallamos la acción si Odoo falla, pero avisamos (warn)
+        console.warn('Cliente borrado de DB pero falló Odoo archive')
+      }
+    }
+
+    // 5. REVALIDAR
+    revalidatePath('/dashboard/gerente')
+    revalidatePath('/api/clientes/sin-asignar')
+
+    return { success: true }
+
+  } catch (error) {
+    console.error('[Delete Cliente Error]', error)
+    return { success: false, error: 'Error al eliminar cliente' }
+  }
+}
+
+// =====================================================
+// Actualizar Cliente (Solo Gerente)
+// Actualiza en Supabase y Odoo
+// =====================================================
+
+const UpdateClienteSchema = z.object({
+  id: z.string().uuid(),
+  // Datos básicos
+  nombre: z.string().min(1, 'Nombre requerido'),
+  telefono: z.string().min(10, 'Teléfono inválido'),
+  
+  // Dirección
+  calle: z.string().min(1, 'Calle requerida'),
+  numeroExterior: z.string().min(1, 'Número exterior requerido'),
+  colonia: z.string().min(1, 'Colonia requerida'),
+  codigoPostal: z.string().regex(/^\d{5}$/, 'CP debe tener 5 dígitos'),
+  ciudad: z.string().default('Guadalajara'),
+})
+
+export async function updateCliente(input: z.infer<typeof UpdateClienteSchema>) {
+  try {
+    const validated = UpdateClienteSchema.parse(input)
+    const supabase = await createClient()
+
+    // 1. AUTH & ROLE CHECK
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return { success: false, error: 'No autorizado' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'gerente') {
+      return { success: false, error: 'Solo gerentes pueden editar clientes' }
+    }
+
+    // 2. OBTENER CLIENTE ACTUAL (para ID de Odoo)
+    const { data: cliente, error: fetchError } = await supabase
+      .from('clients_mirror')
+      .select('odoo_partner_id')
+      .eq('id', validated.id)
+      .single()
+
+    if (fetchError || !cliente) {
+      return { success: false, error: 'Cliente no encontrado' }
+    }
+
+    // 3. ACTUALIZAR SUPABASE
+    const { error: updateError } = await supabase
+      .from('clients_mirror')
+      .update({
+        name: validated.nombre,
+        phone: validated.telefono,
+        street: validated.calle,
+        numero_exterior: validated.numeroExterior,
+        colonia: validated.colonia,
+        codigo_postal: validated.codigoPostal,
+        ciudad: validated.ciudad,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', validated.id)
+
+    if (updateError) {
+      console.error('[Update Cliente DB Error]', updateError)
+      return { success: false, error: updateError.message }
+    }
+
+    // 4. ACTUALIZAR ODOO
+    if (cliente.odoo_partner_id) {
+      try {
+        const { updatePartnerInOdoo } = await import('@/lib/odoo/client')
+        await updatePartnerInOdoo(cliente.odoo_partner_id, {
+          name: validated.nombre,
+          phone: validated.telefono,
+          street: `${validated.calle} ${validated.numeroExterior}`,
+          city: validated.ciudad,
+          zip: validated.codigoPostal,
+        })
+        console.log(`[Sync] Cliente ${validated.id} actualizado en Odoo`)
+      } catch (odooError) {
+        console.error('[Update Cliente Odoo Error]', odooError)
+        console.warn('Cliente actualizado en DB pero falló Odoo sync')
+      }
+    }
+
+    // 5. REVALIDAR
+    revalidatePath('/dashboard/gerente')
+    
+    return { success: true }
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { success: false, error: `Validación: ${error.issues[0].message}` }
+    }
+    console.error('[Update Cliente Error]', error)
+    return { success: false, error: 'Error al actualizar cliente' }
+  }
+}

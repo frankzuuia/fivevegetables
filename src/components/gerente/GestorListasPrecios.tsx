@@ -9,8 +9,9 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Plus, Edit2, Trash2, Tag, DollarSign } from 'lucide-react'
+import { Plus, Edit2, Trash2, Tag, DollarSign, List } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { ModalReglasListaPrecios } from './ModalReglasListaPrecios'
 
 interface PriceList {
   id: string
@@ -24,6 +25,8 @@ interface PriceList {
 export function GestorListasPrecios() {
   const [isCreating, setIsCreating] = useState(false)
   const [editingList, setEditingList] = useState<PriceList | null>(null)
+  const [rulesModalOpen, setRulesModalOpen] = useState(false)
+  const [selectedListForRules, setSelectedListForRules] = useState<PriceList | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     type: 'mayorista' as 'mayorista' | 'minorista' | 'especial',
@@ -33,25 +36,47 @@ export function GestorListasPrecios() {
   const queryClient = useQueryClient()
   const supabase = createClient()
 
+  // Fetch products for rules modal
+  const { data: products } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const response = await fetch('/api/products/catalog')
+      if (!response.ok) throw new Error('Error al cargar productos')
+      const data = await response.json()
+      return data.products || []
+    },
+  })
+
   // Fetch price lists
   const { data: priceLists, isLoading } = useQuery({
     queryKey: ['price-lists'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('price_lists')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      return data as PriceList[]
+      const response = await fetch('/api/price-lists')
+      if (!response.ok) throw new Error('Error al cargar listas')
+      const data = await response.json()
+      return data.pricelists as PriceList[]
     },
   })
 
-  // Create mutation
+  // Create mutation - ahora crea en Dashboard Y Odoo
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { createPriceList } = await import('@/app/actions/products')
-      return createPriceList(data)
+      const response = await fetch('/api/price-lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          discountPercent: data.discountPercentage,
+          type: data.type
+        })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al crear lista')
+      }
+      
+      return response.json()
     },
     onSuccess: (result) => {
       if (result.success) {
@@ -59,7 +84,7 @@ export function GestorListasPrecios() {
         queryClient.invalidateQueries({ queryKey: ['price-lists'] })
         resetForm()
       } else {
-        toast.error(result.error)
+        toast.error(result.error || 'Error desconocido')
       }
     },
   })
@@ -274,11 +299,21 @@ export function GestorListasPrecios() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => handleEdit(list)}
+                  onClick={() => {
+                    setSelectedListForRules(list)
+                    setRulesModalOpen(true)
+                  }}
                   className="flex-1"
                 >
+                  <List className="h-4 w-4" />
+                  Ver Reglas
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleEdit(list)}
+                >
                   <Edit2 className="h-4 w-4" />
-                  Editar
                 </Button>
                 <Button
                   size="sm"
@@ -309,6 +344,28 @@ export function GestorListasPrecios() {
             Crea tu primera lista para asignarla a clientes
           </p>
         </div>
+      )}
+
+      {/* Rules Modal */}
+      {selectedListForRules && (
+        <ModalReglasListaPrecios
+          isOpen={rulesModalOpen}
+          onClose={() => {
+            setRulesModalOpen(false)
+            setSelectedListForRules(null)
+          }}
+          priceListId={selectedListForRules.id}
+          priceListName={selectedListForRules.name}
+          products={products || []}
+          onSave={async (rules) => {
+            const response = await fetch(`/api/price-lists/${selectedListForRules.id}/rules`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ rules })
+            })
+            if (!response.ok) throw new Error('Error al guardar reglas')
+          }}
+        />
       )}
     </div>
   )

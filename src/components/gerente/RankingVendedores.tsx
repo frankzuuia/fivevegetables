@@ -18,9 +18,10 @@ interface RankingVendedoresProps {
   data: Vendedor[]
   isLoading?: boolean
   onVendedorClick?: (vendedorId: string) => void
+  onViewAll?: () => void
 }
 
-export function RankingVendedores({ data, isLoading, onVendedorClick }: RankingVendedoresProps) {
+export function RankingVendedores({ data, isLoading, onVendedorClick, onViewAll }: RankingVendedoresProps) {
   if (isLoading) {
     return (
       <div className="rounded-lg border border-morph-gray-200 bg-white p-6 shadow-sm">
@@ -36,15 +37,18 @@ export function RankingVendedores({ data, isLoading, onVendedorClick }: RankingV
   
   return (
     <div className="overflow-hidden rounded-lg border border-morph-gray-200 bg-white shadow-sm">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-50 to-green-100 p-6">
+      {/* Header - CLICKABLE */}
+      <div 
+        onClick={onViewAll}
+        className={`bg-gradient-to-r from-green-50 to-green-100 p-6 ${onViewAll ? 'cursor-pointer hover:from-green-100 hover:to-green-200 transition-all' : ''}`}
+      >
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-morph-gray-900">
               💼 Top 5 Vendedores
             </h2>
             <p className="mt-1 text-sm text-morph-gray-600">
-              Vendedores con mayores ventas
+              Vendedores con mayores ventas {onViewAll && '• Click para ver todos'}
             </p>
           </div>
           <div className="rounded-full bg-green-200 px-4 py-2">

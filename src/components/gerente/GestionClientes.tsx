@@ -1,216 +1,131 @@
 // =====================================================
-// COMPONENT: Gestión Clientes (Gerente)
-// Tabla completa clientes con search + reasignación
+// COMPONENT: Gestión Clientes (Widget Dashboard)
+// Vista resumen (Top 3) + Trigger para Modal de Gestión Completa
 // =====================================================
 
 'use client'
 
 import { useState } from 'react'
-import { ModalAsignarVendedor } from './ModalAsignarVendedor'
-import { AsignarPriceListModal } from './AsignarPriceListModal'
 import { useAllClientes } from '@/lib/hooks/useClientes'
-import { Search, UserCheck, Users, Tag } from 'lucide-react'
+import { Users, ExternalLink, ChevronRight, Store } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { ModalGestionClientesCompleta } from './ModalGestionClientesCompleta'
 
 export function GestionClientes() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCliente, setSelectedCliente] = useState<any>(null)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [priceListModalOpen, setPriceListModalOpen] = useState(false)
+  const [modalCompletoOpen, setModalCompletoOpen] = useState(false)
   
-  const { data: clientes, isLoading } = useAllClientes(searchTerm)
+  // Pedimos clientes (sin termino de búsqueda para el widget)
+  const { data: clientes, isLoading } = useAllClientes('')
   
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('es-MX', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  }
-  
+  // Tomamos solo los primeros 3 para el preview
+  const previewClientes = clientes?.slice(0, 3) || []
+  const totalClientes = clientes?.length || 0
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4">
+      {/* Header del Widget */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-morph-gray-900">
-            Gestión de Clientes
-          </h1>
-          <p className="mt-2 text-morph-gray-600">
-            Control total de asignaciones vendedor + tarifa
+          <h2 className="text-xl font-bold text-morph-gray-900 flex items-center gap-2">
+            <Store className="h-5 w-5 text-morph-primary-600" />
+            Cartera de Clientes
+          </h2>
+          <p className="text-sm text-morph-gray-600">
+            Vista rápida de últimos registrados
           </p>
         </div>
         
-        <div className="flex items-center gap-2 rounded-lg bg-morph-primary-50 px-4 py-2">
-          <Users className="h-5 w-5 text-morph-primary-600" />
-          <span className="text-2xl font-bold text-morph-primary-700">
-            {clientes?.length || 0}
-          </span>
-          <span className="text-sm text-morph-gray-600">clientes</span>
-        </div>
+        {/* Botón Principal: Ver Todo / Gestionar */}
+        <Button 
+            onClick={() => setModalCompletoOpen(true)}
+            className="group"
+            variant="ghost"
+        >
+            <span className="text-morph-primary-700 font-semibold mr-1">
+                Gestión Maestra ({totalClientes})
+            </span>
+            <ExternalLink className="h-4 w-4 text-morph-primary-600 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </Button>
       </div>
-      
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-morph-gray-400" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar cliente por nombre..."
-          className="w-full rounded-lg border border-morph-gray-300 bg-white py-3 pl-12 pr-4 transition-all focus:border-transparent focus:ring-2 focus:ring-morph-primary-500"
-        />
-      </div>
-      
-      {/* Tabla */}
-      {isLoading ? (
-        <div className="py-12 text-center">
-          <p className="text-morph-gray-600">Cargando clientes...</p>
-        </div>
-      ) : clientes && clientes.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border border-morph-gray-200 bg-white shadow-sm">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-morph-gray-50 to-morph-gray-100">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-morph-gray-700">
-                  Cliente
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-morph-gray-700">
-                  Vendedor Actual
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-morph-gray-700">
-                  Tarifa
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-morph-gray-700">
-                  Registro
-                </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-morph-gray-700">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-morph-gray-200">
-              {clientes.map((cliente: any) => (
-                <tr
-                  key={cliente.id}
-                  className="transition-colors hover:bg-morph-gray-50"
-                >
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-semibold text-morph-gray-900">
+
+      {/* Grid de Tarjetas Preview (Max 3) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {isLoading ? (
+             // Skeleton loading simple
+             [1,2,3].map(i => (
+                 <div key={i} className="h-32 rounded-lg bg-morph-gray-100 animate-pulse"></div>
+             ))
+        ) : previewClientes.length > 0 ? (
+            previewClientes.map((cliente: any) => (
+                <Card key={cliente.id} variant="flat" className="p-4 hover:border-morph-primary-200 hover:shadow-sm transition-all cursor-pointer border border-morph-gray-200" onClick={() => setModalCompletoOpen(true)}>
+                    <div className="flex items-start justify-between mb-2">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">
+                            {cliente.name.charAt(0).toUpperCase()}
+                        </div>
+                        {cliente.vendedor_id ? (
+                            <span className="text-[10px] font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                Asignado
+                            </span>
+                        ) : (
+                            <span className="text-[10px] font-medium bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                                Sin Asignar
+                            </span>
+                        )}
+                    </div>
+                    
+                    <h3 className="font-bold text-morph-gray-900 truncate" title={cliente.name}>
                         {cliente.name}
-                      </p>
-                      <p className="text-sm text-morph-gray-600">
-                        {cliente.email || 'Sin email'}
-                      </p>
-                      <p className="text-xs text-morph-gray-500">
-                        📞 {cliente.phone}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {cliente.vendedor_name ? (
-                      <div className="flex items-center gap-2">
-                        <UserCheck className="h-4 w-4 text-morph-primary-600" />
-                        <span className="font-medium text-morph-gray-900">
-                          {cliente.vendedor_name}
+                    </h3>
+                    
+                    {/* Dirección Resumida */}
+                    <p className="text-xs text-morph-gray-500 mt-1 line-clamp-2 h-8">
+                        {(cliente.street || cliente.colonia) ? (
+                            <>📍 {cliente.street} {cliente.numero_exterior} {cliente.colonia}</>
+                        ) : 'Sin dirección registrada'}
+                    </p>
+
+                    <div className="mt-3 pt-3 border-t border-morph-gray-100 flex justify-between items-center">
+                        <span className="text-xs text-morph-gray-400">
+                            {new Date(cliente.created_at).toLocaleDateString('es-MX')}
                         </span>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
-                        ⚠️ Sin asignar
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {cliente.pricelist_name ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-morph-primary-100 px-3 py-1 text-xs font-medium text-morph-primary-700">
-                        💰 {cliente.pricelist_name}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-morph-gray-400">
-                        Sin tarifa
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-morph-gray-600">
-                      {formatDate(cliente.created_at)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2 justify-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedCliente(cliente)
-                          setModalOpen(true)
-                        }}
-                      >
-                        {cliente.vendedor_id ? '🔄 Reasignar' : '👤 Asignar'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedCliente(cliente)
-                          setPriceListModalOpen(true)
-                        }}
-                        className="border-morph-primary-300 text-morph-primary-600 hover:bg-morph-primary-50"
-                        title="Asignar lista de precios"
-                      >
-                        <Tag className="h-4 w-4" />
-                      </Button>
+                        <span className="text-xs font-medium text-morph-primary-600 flex items-center group">
+                            Ver detalle <ChevronRight className="h-3 w-3 ml-0.5 transition-transform group-hover:translate-x-0.5" />
+                        </span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="py-12 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-morph-gray-100">
-            <Users className="h-8 w-8 text-morph-gray-400" />
-          </div>
-          <p className="text-morph-gray-600">
-            {searchTerm
-              ? `No se encontraron clientes con "${searchTerm}"`
-              : 'No hay clientes registrados'}
-          </p>
-        </div>
-      )}
-      
-      {/* Modal Asignar/Reasignar Vendedor */}
-      {modalOpen && selectedCliente && (
-        <ModalAsignarVendedor
-          cliente={selectedCliente}
-          onClose={() => {
-            setModalOpen(false)
-            setSelectedCliente(null)
-          }}
-          onSuccess={() => {
-            setModalOpen(false)
-            setSelectedCliente(null)
-          }}
-        />
-      )}
-      
-      {/* Modal Asignar Lista de Precios */}
-      {priceListModalOpen && selectedCliente && (
-        <AsignarPriceListModal
-          cliente={selectedCliente}
-          onClose={() => {
-            setPriceListModalOpen(false)
-            setSelectedCliente(null)
-          }}
-          onSuccess={() => {
-            setPriceListModalOpen(false)
-            setSelectedCliente(null)
-          }}
-        />
-      )}
+                </Card>
+            ))
+        ) : (
+            <div className="col-span-3 py-8 text-center bg-morph-gray-50 rounded-lg border border-dashed border-morph-gray-300">
+                <Users className="h-8 w-8 text-morph-gray-400 mx-auto mb-2" />
+                <p className="text-morph-gray-500">No hay clientes recientes.</p>
+                <Button variant="link" onClick={() => setModalCompletoOpen(true)}>
+                    Registrar el primero
+                </Button>
+            </div>
+        )}
+
+        {/* Action Card si hay pocos clientes */}
+        {previewClientes.length > 0 && previewClientes.length < 3 && (
+            <div 
+                onClick={() => setModalCompletoOpen(true)}
+                className="flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed border-morph-gray-200 hover:border-morph-primary-300 hover:bg-morph-primary-50/50 cursor-pointer transition-all h-full min-h-[140px]"
+            >
+                <div className="w-10 h-10 rounded-full bg-morph-gray-100 flex items-center justify-center mb-2 group-hover:bg-white text-morph-gray-400 group-hover:text-morph-primary-500">
+                    <ChevronRight className="h-6 w-6" />
+                </div>
+                <span className="font-medium text-morph-gray-500 group-hover:text-morph-primary-700">
+                    Ver todos los clientes
+                </span>
+            </div>
+        )}
+      </div>
+
+      {/* Modal Principal de Gestión Completa */}
+      <ModalGestionClientesCompleta 
+        isOpen={modalCompletoOpen}
+        onClose={() => setModalCompletoOpen(false)}
+      />
     </div>
   )
 }

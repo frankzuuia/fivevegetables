@@ -1,11 +1,17 @@
+// =====================================================
+// COMPONENT: Widget Resumen Usuarios (PINs)
+// Muestra conteo y abre el Gestor Completo
+// =====================================================
+
 'use client'
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { Eye, EyeOff, RefreshCw, QrCode, X } from 'lucide-react'
-import { toast } from 'sonner'
-import { QRCodeSVG } from 'qrcode.react'
+import { ShieldCheck, Users, KeyRound, ChevronRight, Settings2 } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { GestorUsuariosPINModal } from './GestorUsuariosPINModal'
 
 interface User {
   id: string
@@ -13,14 +19,11 @@ interface User {
   role: string
   phone: string
   pin_code: string
-  email?: string
 }
 
 export function ListaUsuariosPINs() {
   const supabase = createClient()
-  const [revealedPINs, setRevealedPINs] = useState<Set<string>>(new Set())
-  const [qrClienteId, setQrClienteId] = useState<string | null>(null)
-  const [qrClienteNombre, setQrClienteNombre] = useState<string>('')
+  const [modalOpen, setModalOpen] = useState(false)
 
   // Obtener vendedores
   const { data: vendedores, refetch: refetchVendedores } = useQuery({
@@ -31,7 +34,6 @@ export function ListaUsuariosPINs() {
         .select('id, full_name, role, phone, pin_code')
         .eq('role', 'vendedor')
         .order('full_name', { ascending: true })
-
       if (error) throw error
       return data as User[]
     },
@@ -46,246 +48,64 @@ export function ListaUsuariosPINs() {
         .select('id, full_name, role, phone, pin_code')
         .eq('role', 'cliente')
         .order('full_name', { ascending: true })
-
       if (error) throw error
       return data as User[]
     },
   })
 
-  const toggleRevealPIN = (userId: string) => {
-    setRevealedPINs((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(userId)) {
-        newSet.delete(userId)
-      } else {
-        newSet.add(userId)
-      }
-      return newSet
-    })
+  const refetchAll = () => {
+      refetchVendedores()
+      refetchClientes()
   }
 
-  const copyPIN = (pin: string, nombre: string) => {
-    navigator.clipboard.writeText(pin)
-    toast.success(`PIN de ${nombre} copiado`)
-  }
-
-  const regeneratePIN = async (userId: string, nombre: string) => {
-    if (!confirm(`¿Regenerar el PIN de ${nombre}? El PIN anterior dejará de funcionar.`)) return
-
-    const newPIN = Math.floor(1000 + Math.random() * 9000).toString()
-    
-    const { error } = await supabase
-      .from('profiles')
-      // @ts-ignore - pin_code not in generated types yet
-      .update({ pin_code: newPIN })
-      .eq('id', userId)
-
-    if (error) {
-      toast.error('Error al regenerar PIN')
-      return
-    }
-
-    toast.success(`Nuevo PIN generado: ${newPIN}`)
-    refetchVendedores()
-    refetchClientes()
-  }
+  const totalVendedores = vendedores?.length || 0
+  const totalClientes = clientes?.length || 0
 
   return (
-    <div className="space-y-6">
-      {/* Vendedores */}
-      <div className="rounded-lg border border-morph-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-semibold text-morph-gray-900">
-          Vendedores ({vendedores?.length || 0})
-        </h3>
-
-        {vendedores && vendedores.length > 0 ? (
-          <div className="space-y-2">
-            {vendedores.map((vendedor) => {
-              const isRevealed = revealedPINs.has(vendedor.id)
-              return (
-                <div
-                  key={vendedor.id}
-                  className="flex items-center justify-between rounded-lg border border-morph-gray-100 bg-morph-gray-50 p-3 hover:bg-morph-gray-100 transition-colors"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-morph-gray-900">
-                      {vendedor.full_name}
-                    </p>
-                    <p className="text-sm text-morph-gray-500">
-                      📱 {vendedor.phone}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {/* PIN Display */}
-                    <div className="flex items-center gap-2 rounded-lg bg-white border border-emerald-200 px-3 py-2">
-                      <span className="font-mono text-sm font-bold text-emerald-600">
-                        {isRevealed ? vendedor.pin_code : '••••'}
-                      </span>
-                      <button
-                        onClick={() => toggleRevealPIN(vendedor.id)}
-                        className="text-gray-400 hover:text-emerald-600 transition-colors"
-                        title={isRevealed ? 'Ocultar PIN' : 'Mostrar PIN'}
-                      >
-                        {isRevealed ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
+    <>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Tarjeta Vendedores */}
+            <Card variant="flat" className="p-4 border border-indigo-100 bg-indigo-50/30 flex items-center justify-between hover:border-indigo-200 transition-colors">
+                <div className="flex items-center gap-3">
+                    <div className="bg-indigo-100 p-2.5 rounded-full text-indigo-600">
+                        <ShieldCheck className="h-5 w-5" />
                     </div>
-
-                    {/* Acciones */}
-                    {isRevealed && (
-                      <>
-                        <button
-                          onClick={() => copyPIN(vendedor.pin_code, vendedor.full_name)}
-                          className="text-emerald-600 hover:text-emerald-700 text-xs font-medium px-2 py-1 rounded hover:bg-emerald-50 transition-colors"
-                        >
-                          Copiar
-                        </button>
-                        <button
-                          onClick={() => regeneratePIN(vendedor.id, vendedor.full_name)}
-                          className="text-gray-500 hover:text-gray-700 transition-colors"
-                          title="Regenerar PIN"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-morph-gray-500">No hay vendedores registrados</p>
-        )}
-      </div>
-
-      {/* Clientes */}
-      <div className="rounded-lg border border-morph-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-semibold text-morph-gray-900">
-          Clientes ({clientes?.length || 0})
-        </h3>
-
-        {clientes && clientes.length > 0 ? (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {clientes.map((cliente) => {
-              const isRevealed = revealedPINs.has(cliente.id)
-              return (
-                <div
-                  key={cliente.id}
-                  className="flex items-center justify-between rounded-lg border border-morph-gray-100 bg-morph-gray-50 p-3 hover:bg-morph-gray-100 transition-colors"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-morph-gray-900">
-                      {cliente.full_name}
-                    </p>
-                    <p className="text-sm text-morph-gray-500">
-                      📱 {cliente.phone}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {/* PIN Display */}
-                    <div className="flex items-center gap-2 rounded-lg bg-white border border-emerald-200 px-3 py-2">
-                      <span className="font-mono text-sm font-bold text-emerald-600">
-                        {isRevealed ? cliente.pin_code : '••••'}
-                      </span>
-                      <button
-                        onClick={() => toggleRevealPIN(cliente.id)}
-                        className="text-gray-400 hover:text-emerald-600 transition-colors"
-                        title={isRevealed ? 'Ocultar PIN' : 'Mostrar PIN'}
-                      >
-                        {isRevealed ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
+                    <div>
+                        <h4 className="font-bold text-gray-800">Vendedores</h4>
+                        <p className="text-xs text-gray-500">{totalVendedores} activos</p>
                     </div>
-
-                    {/* Acciones */}
-                    {isRevealed && (
-                      <>
-                        <button
-                          onClick={() => copyPIN(cliente.pin_code, cliente.full_name)}
-                          className="text-emerald-600 hover:text-emerald-700 text-xs font-medium px-2 py-1 rounded hover:bg-emerald-50 transition-colors"
-                        >
-                          Copiar
-                        </button>
-                        <button
-                          onClick={() => regeneratePIN(cliente.id, cliente.full_name)}
-                          className="text-gray-500 hover:text-gray-700 transition-colors"
-                          title="Regenerar PIN"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setQrClienteId(cliente.id)
-                            setQrClienteNombre(cliente.full_name)
-                          }}
-                          className="text-emerald-600 hover:text-emerald-700 transition-colors"
-                          title="Ver QR del cliente"
-                        >
-                          <QrCode className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
                 </div>
-              )
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-morph-gray-500">No hay clientes registrados</p>
-        )}
-      </div>
-      
-      {/* Modal QR */}
-      {qrClienteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm rounded-xl border-4 border-emerald-500 bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">
-                QR de {qrClienteNombre}
-              </h3>
-              <button
-                onClick={() => setQrClienteId(null)}
-                className="rounded-lg p-2 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="flex flex-col items-center gap-4">
-              <div className="rounded-xl border-4 border-emerald-500 bg-white p-4">
-                <QRCodeSVG
-                  value={typeof window !== 'undefined' ? `${window.location.origin}/auth/login` : 'https://fivevegetables.com/auth/login'}
-                  size={200}
-                  level="H"
-                  includeMargin={true}
-                  bgColor="#ffffff"
-                  fgColor="#059669"
-                />
-              </div>
-              
-              <p className="text-center text-sm text-gray-600">
-                El cliente escanea e ingresa su PIN
-              </p>
-              
-              <button
-                onClick={() => setQrClienteId(null)}
-                className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
+                {/* Solo mostramos botón si hay data, o un placeholder si no */}
+                <Button variant="ghost" size="sm" onClick={() => setModalOpen(true)} className="text-indigo-600 hover:bg-indigo-50">
+                    <Settings2 className="h-4 w-4" />
+                </Button>
+            </Card>
+
+            {/* Tarjeta Clientes PINs */}
+            <Card variant="flat" className="p-4 border border-blue-100 bg-blue-50/30 flex items-center justify-between hover:border-blue-200 transition-colors">
+                <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2.5 rounded-full text-blue-600">
+                         <KeyRound className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-gray-800">Accesos Clientes</h4>
+                        <p className="text-xs text-gray-500">{totalClientes} con PIN</p>
+                    </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setModalOpen(true)} className="text-blue-600 hover:bg-blue-50">
+                    <Settings2 className="h-4 w-4" />
+                </Button>
+            </Card>
         </div>
-      )}
-    </div>
+
+        {/* Modal Gestor Completo */}
+        <GestorUsuariosPINModal 
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            vendedores={vendedores || []}
+            clientes={clientes || []}
+            refetchData={refetchAll}
+        />
+    </>
   )
 }

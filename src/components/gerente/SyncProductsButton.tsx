@@ -10,25 +10,41 @@ export function SyncProductsButton() {
   const handleSync = async () => {
     try {
       setLoading(true)
-      toast.info('Iniciando sincronización de productos...')
+      toast.info('Sincronizando productos y listas de precios desde Odoo...')
       
-      const response = await fetch('/api/sync/products', {
+      // 1. Sincronizar productos
+      const productsResponse = await fetch('/api/sync/products', {
         method: 'POST',
       })
       
-      const data = await response.json()
+      const productsData = await productsResponse.json()
       
-      if (data.success) {
-        toast.success(`✅ ${data.synced} productos sincronizados`)
-        if (data.errors > 0) {
-          toast.warning(`⚠️ ${data.errors} productos con errores`)
+      // 2. Sincronizar listas de precios
+      const pricelistsResponse = await fetch('/api/odoo/sync-pricelists', {
+        method: 'POST',
+      })
+      
+      const pricelistsData = await pricelistsResponse.json()
+      
+      // Mostrar resultados combinados
+      if (productsData.success && pricelistsData.success) {
+        toast.success(
+          `✅ ${productsData.synced} productos, ${pricelistsData.pricelists} listas de precios sincronizadas`
+        )
+        if (productsData.errors > 0) {
+          toast.warning(`⚠️ ${productsData.errors} productos con errores`)
         }
       } else {
-        toast.error(`Error: ${data.error}`)
+        if (!productsData.success) {
+          toast.error(`Error en productos: ${productsData.error}`)
+        }
+        if (!pricelistsData.success) {
+          toast.error(`Error en listas: ${pricelistsData.error}`)
+        }
       }
     } catch (error) {
-      console.error('Error syncing products:', error)
-      toast.error('Error al sincronizar productos')
+      console.error('Error syncing from Odoo:', error)
+      toast.error('Error al sincronizar desde Odoo')
     } finally {
       setLoading(false)
     }
@@ -40,7 +56,7 @@ export function SyncProductsButton() {
       disabled={loading}
       variant="primary"
     >
-      {loading ? 'Sincronizando...' : '🔄 Sincronizar Productos desde Odoo'}
+      {loading ? 'Sincronizando...' : '🔄 Sincronizar desde Odoo'}
     </Button>
   )
 }
