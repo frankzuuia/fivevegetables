@@ -555,6 +555,36 @@ export async function updatePriceListInOdoo(pricelistId: number, values: Record<
 }
 
 /**
+ * Leer lista de precios desde Odoo
+ */
+export async function readPriceListFromOdoo(pricelistId: number): Promise<{ name: string; active: boolean }> {
+  const uid = await authenticateOdoo()
+
+  return new Promise((resolve, reject) => {
+    objectClient.methodCall(
+      'execute_kw',
+      [
+        ODOO_DB,
+        uid,
+        ODOO_API_KEY,
+        'product.pricelist',
+        'read',
+        [[pricelistId]],
+        { fields: ['name', 'active'] }
+      ],
+      (error: any, result: any) => {
+        if (error) {
+          console.error('[Odoo Read PriceList Error]', error)
+          reject(error)
+          return
+        }
+        resolve(result[0])
+      }
+    )
+  })
+}
+
+/**
  * Eliminar lista de precios en Odoo (archivar)
  */
 export async function deletePriceListInOdoo(pricelistId: number): Promise<void> {

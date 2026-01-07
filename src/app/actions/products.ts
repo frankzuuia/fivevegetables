@@ -277,7 +277,7 @@ export async function updatePriceList(input: z.infer<typeof UpdatePriceListSchem
         console.log('[updatePriceList] Odoo updated successfully')
 
         // Read back from Odoo to ensure sync
-        const { objectClient, authenticateOdoo, ODOO_DB, ODOO_API_KEY } = await import('@/lib/odoo/client')
+        const { readPriceListFromOdoo } = await import('@/lib/odoo/client')
         const uid = await authenticateOdoo()
 
         const odooData: any = await new Promise((resolve, reject) => {
