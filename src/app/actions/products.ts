@@ -270,9 +270,8 @@ export async function updatePriceList(input: z.infer<typeof UpdatePriceListSchem
     // Actualizar en Odoo si tiene odoo_pricelist_id
     if (priceList.odoo_pricelist_id) {
       try {
-        const { updateProductInOdoo } = await import('@/lib/odoo/client')
-        // Use updateProductInOdoo which works for any model with write method
-        await updateProductInOdoo(priceList.odoo_pricelist_id, {
+        const { updatePriceListInOdoo } = await import('@/lib/odoo/client')
+        await updatePriceListInOdoo(priceList.odoo_pricelist_id, {
           name: validated.name,
         })
         console.log('[updatePriceList] Odoo updated successfully')
