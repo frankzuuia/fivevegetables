@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
         // Buscar cliente en Supabase por odoo_partner_id
         const { data: cliente } = await supabase
           .from('clients_mirror')
-          .select('id')
+          .select('id, store_id')
           .eq('odoo_partner_id', Array.isArray(order.partner_id) ? order.partner_id[0] : order.partner_id)
           .single()
 
@@ -203,6 +203,7 @@ export async function POST(request: NextRequest) {
 
         const { error } = await supabase.from('orders_shadow').upsert(
           {
+            store_id: cliente.store_id || process.env.NEXT_PUBLIC_DEFAULT_STORE_ID,
             odoo_order_id: order.id,
             cliente_id: cliente.id,
             order_number: order.name || `ORD-${order.id}`,
@@ -211,6 +212,7 @@ export async function POST(request: NextRequest) {
             subtotal: order.amount_total - order.amount_tax,
             tax: order.amount_tax,
             total: order.amount_total,
+            request_invoice: invoiceStatus !== 'no',
             synced_at: new Date().toISOString(),
           },
           { onConflict: 'odoo_order_id' }
