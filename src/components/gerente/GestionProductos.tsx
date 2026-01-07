@@ -22,6 +22,7 @@ interface Product {
   qty_available: number // Stock from Odoo (synced)
   odoo_product_id: number
   uom: string
+  active: boolean
 }
 
 export function GestionProductos() {
@@ -203,8 +204,8 @@ export function GestionProductos() {
                   })}
                   disabled={toggleActiveMutation.isPending}
                   className={`absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full shadow-sm backdrop-blur-sm transition-all ${product.active
-                      ? 'bg-green-500/90 hover:bg-green-600 text-white'
-                      : 'bg-gray-400/90 hover:bg-gray-500 text-white'
+                    ? 'bg-green-500/90 hover:bg-green-600 text-white'
+                    : 'bg-gray-400/90 hover:bg-gray-500 text-white'
                     }`}
                   title={product.active ? 'Desactivar producto' : 'Activar producto'}
                 >
