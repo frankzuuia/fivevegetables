@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       .insert({
         name,
         store_id: storeId,
-        discount_percent: discountPercent || 0,
+        discount_percentage: discountPercent || 0,
         type: type || 'standard',
         odoo_id: odooId,
       })
@@ -72,8 +72,15 @@ export async function POST(request: NextRequest) {
       odooId
     })
   } catch (error: any) {
-    console.error('Error creating pricelist:', error)
-    return NextResponse.json({ error: error.message || 'Error al crear lista de precios' }, { status: 500 })
+    console.error('[price-lists POST] Error creating pricelist:', error)
+    console.error('[price-lists POST] Error name:', error.name)
+    console.error('[price-lists POST] Error message:', error.message)
+    console.error('[price-lists POST] Error code:', error.code)
+    console.error('[price-lists POST] Error details:', error.details)
+    return NextResponse.json({
+      error: error.message || 'Error al crear lista de precios',
+      details: error.code || error.name
+    }, { status: 500 })
   }
 }
 
