@@ -5,11 +5,11 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Search, Edit2, Package, Check, X, Power } from 'lucide-react'
+import { Search, Edit2, Package, Check, X, Power, ArrowUp } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
 
@@ -30,9 +30,23 @@ export function GestionProductos() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editPrice, setEditPrice] = useState<string>('')
   const [editUomId, setEditUomId] = useState<number | undefined>(undefined) // Store Odoo UoM ID
+  const [showScrollTop, setShowScrollTop] = useState(false)
 
   const queryClient = useQueryClient()
   const supabase = createClient()
+
+  // Detect scroll for sticky search and scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   // Fetch products
   const { data: products, isLoading } = useQuery({
@@ -155,16 +169,18 @@ export function GestionProductos() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-morph-gray-400" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar producto..."
-          className="w-full rounded-lg border border-morph-gray-300 bg-white py-3 pl-12 pr-4 transition-all focus:border-morph-primary-500 focus:ring-2 focus:ring-morph-primary-200"
-        />
+      {/* Search - Sticky */}
+      <div className="sticky top-0 z-10 bg-morph-bg pb-4 pt-2">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-morph-gray-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar producto..."
+            className="w-full rounded-lg border border-morph-gray-300 bg-white py-3 pl-12 pr-4 text-morph-gray-900 placeholder-morph-gray-500 shadow-sm transition-all focus:border-morph-primary-500 focus:outline-none focus:ring-2 focus:ring-morph-primary-500/20"
+          />
+        </div>
       </div>
 
       {/* Products List */}
