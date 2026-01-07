@@ -8,9 +8,9 @@ import { z } from 'zod'
 // =====================================================
 
 const QuerySchema = z.object({
-  cliente_id: z.string().uuid().optional(),
-  category: z.string().optional(),
-  search: z.string().optional(),
+  cliente_id: z.string().uuid().nullish(),
+  category: z.string().nullish(),
+  search: z.string().nullish(),
   active_only: z.enum(['true', 'false']).default('true').transform(v => v === 'true'),
 })
 
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Parámetros inválidos', details: error.errors },
+        { error: 'Parámetros inválidos', details: error.issues },
         { status: 400 }
       )
     }
