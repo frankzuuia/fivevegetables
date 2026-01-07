@@ -27,25 +27,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nombre es requerido' }, { status: 400 })
     }
 
-    // Obtener config de Odoo
-    const { data: odooConfig } = await supabase
-      .from('odoo_config')
-      .select('*')
-      .eq('store_id', storeId)
-      .single()
-
     let odooId: number | null = null
 
-    // 1. Crear en Odoo primero (si hay config)
-    if (odooConfig) {
-      try {
-        const { url, database, username, password } = odooConfig
-        odooId = await createOdooPricelist(url, database, username, password, name, discountPercent || 0)
-        console.log(`Created pricelist in Odoo with ID: ${odooId}`)
-      } catch (odooError) {
-        console.error('Error creating in Odoo:', odooError)
-        // Continuamos aunque falle Odoo
-      }
+    // 1. Crear en Odoo primero (usando variables de entorno)
+    try {
+      const { createPriceListInOdoo } = await import('@/lib/odoo/client')
+      odooId = await createPriceListInOdoo({
+        name,
+        discount_percent: discountPercent || 0
+      })
+      console.log(`[price-lists] Created pricelist in Odoo with ID: ${odooId}`)
+    } catch (odooError) {
+      console.error('[price-lists] Error creating in Odoo:', odooError)
+      // Continuamos aunque falle Odoo (lista se crea solo en app)
     }
 
     // 2. Crear en Supabase local
@@ -56,7 +50,7 @@ export async function POST(request: NextRequest) {
         store_id: storeId,
         discount_percentage: discountPercent || 0,
         type: type || 'standard',
-        odoo_pricelist_id: odooId || null,
+        odoo_pricelist_id: odooId,
       })
       .select()
       .single()
