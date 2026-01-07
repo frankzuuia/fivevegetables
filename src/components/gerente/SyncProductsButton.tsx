@@ -12,9 +12,24 @@ export function SyncProductsButton() {
       setLoading(true)
       toast.info('Sincronizando productos y listas de precios desde Odoo...')
 
+      // Get session token for API calls
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
       // 1. Sincronizar productos
       const productsResponse = await fetch('/api/sync/products', {
         method: 'POST',
+        credentials: 'include',
+        headers,
       })
 
       const productsData = await productsResponse.json()
@@ -23,6 +38,7 @@ export function SyncProductsButton() {
       const pricelistsResponse = await fetch('/api/odoo/sync-pricelists', {
         method: 'POST',
         credentials: 'include',
+        headers,
       })
 
       const pricelistsData = await pricelistsResponse.json()
