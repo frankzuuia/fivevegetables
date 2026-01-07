@@ -111,6 +111,7 @@ export async function getProductsWithStock() {
           'qty_available',
           'categ_id',
           'image_1920',
+          'uom_id',
         ],
         limit: 1000,
       }
